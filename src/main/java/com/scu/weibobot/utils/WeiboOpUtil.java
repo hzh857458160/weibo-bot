@@ -162,7 +162,6 @@ public class WeiboOpUtil {
 
 
     public static boolean subscribeWeiboByInterest(WebDriver driver, List<String> interestList){
-        //TODO:随便加个需求，只关注粉丝不低于1万的博主
         try {
             String handle = WebDriverUtil.openNewTab(driver, BASE_URL);
             WebDriverUtil.changeWindowTo(driver, handle);
@@ -197,6 +196,7 @@ public class WeiboOpUtil {
                 waitSeconds(2);
 
                 //获取到可关注按钮（直接获取到当前所有可关注的按钮的list）
+                //TODO:随便加个需求，只关注粉丝不低于1万的博主
                 List<WebElement> followList =  WebDriverUtil.isElementsExist(By.cssSelector("i.m-font.m-font-follow"), driver);
                 String jsClick = "arguments[0].click();";
                 for(int i = 0; i < followList.size(); i++){
@@ -204,7 +204,6 @@ public class WeiboOpUtil {
                         WebDriverUtil.scrollWeibo(driver, 550);
                     }
                     WebDriverUtil.jsExecuter(driver, jsClick, followList.get(i));
-//                    cardList.get(i).click();
                     waitSeconds(1);
                 }
             }
@@ -248,7 +247,6 @@ public class WeiboOpUtil {
         driver.get(editDataBtn.getAttribute("href"));
         waitSeconds(2);
     }
-
 
     public static void setNickName(WebDriver driver, String nickName){
         initInfoEdit(driver);
@@ -306,7 +304,7 @@ public class WeiboOpUtil {
         String city = citySelector.getFirstSelectedOption().getText();
         log.info("{}", province + city);
 
-        return Consts.PROVICE[province] + city;
+        return Consts.PROVINCE[province] + city;
     }
 
     public static void setGender(WebDriver driver,int gender){
@@ -318,7 +316,7 @@ public class WeiboOpUtil {
     }
 
 
-    public static void setBirthDate(WebDriver driver,LocalDate birthDate){
+    public static void setBirthDate(WebDriver driver, LocalDate birthDate){
         initInfoEdit(driver);
         //生日
         Select yearSelector = new Select(driver.findElement(By.id("year")));
@@ -329,7 +327,14 @@ public class WeiboOpUtil {
         waitSeconds(2);
         monthSelector.selectByValue(birthDate.getMonthValue() + "");
         waitSeconds(2);
-        daySelector.selectByValue(birthDate.getDayOfMonth() + "");
+        daySelector.selectByValue((birthDate.getDayOfMonth() - 1) + "");
+    }
+
+    public static void saveUserSetting(WebDriver driver){
+        WebElement saveBtn = WebDriverUtil.isElementExist(By.id("save"), driver);
+        if (saveBtn != null){
+            saveBtn.click();
+        }
     }
 
     private static WebElement getFocusWeibo(WebDriver driver, int index){

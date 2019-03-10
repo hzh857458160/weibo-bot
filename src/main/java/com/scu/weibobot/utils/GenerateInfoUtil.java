@@ -91,7 +91,7 @@ public class GenerateInfoUtil {
      * 例如:四川 成都 22-1
      */
     public static int generateLocation(){
-        return random.nextInt(Consts.PROVICE.length);
+        return random.nextInt(Consts.PROVINCE.length);
     }
 
     /**

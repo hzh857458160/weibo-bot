@@ -56,6 +56,7 @@ public class AccountController {
             WeiboOpUtil.setGender(driver, gender);
             WeiboOpUtil.setBirthDate(driver, birthDate);
             String location = WeiboOpUtil.setLocation(driver, locationNum);
+            WeiboOpUtil.saveUserSetting(driver);
             log.info("nickName:{}, gender:{}, birthDate:{}, location:{}", nickName, gender, birthDate, location);
 
             List<String> list = new ArrayList<>(Arrays.asList(interests.split("#")));
