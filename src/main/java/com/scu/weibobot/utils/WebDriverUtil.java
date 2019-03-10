@@ -1,43 +1,28 @@
 package com.scu.weibobot.utils;
 
 import lombok.extern.slf4j.Slf4j;
-import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.*;
 
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 public class WebDriverUtil {
-    private static final String DRIVER_PROPERTY = "webdriver.chrome.driver";
-    private static final String CHROME_DRIVER_PATH = "C:\\Users\\HanrAx\\AppData\\Local\\Google\\Chrome\\Application\\chromedriver.exe";
-    private static ChromeOptions chromeOptions = new ChromeOptions();
-    private static final String MOBILE_USER_AGENT = "user-agent = 'Mozilla/5.0 (Linux; U; Android 8.1.0; zh-CN; BLA-AL00 Build/HUAWEIBLA-AL00) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/57.0.2987.108 UCBrowser/11.9.4.974 UWS/2.13.1.48 Mobile Safari/537.36 AliApp(DingTalk/4.5.11) com.alibaba.android.rimet/10487439 Channel/227200 language/zh-CN'";
 
+    private WebDriverUtil(){}
 
-    static {
-        System.setProperty(DRIVER_PROPERTY, CHROME_DRIVER_PATH);
-//        chromeOptions.setHeadless(true);
-        //浏览器开启即最大化
-        chromeOptions.addArguments("--disable-plugins","--disable-images","--start-maximized");
-        //使用移动端user-agent
-//        chromeOptions.addArguments(MOBILE_USER_AGENT);
-
-    }
-
-
-    public static WebDriver getWebDriver(){
-        log.info("返回一个driver");
-        return new ChromeDriver(chromeOptions);
-    }
-
+    /**
+     * 睡眠对应秒数
+     * @param second
+     */
     public static void waitSeconds(int second){
         waitSeconds((double)second);
     }
 
+    /**
+     * 睡眠对应秒数，double
+     * @param second
+     */
     public static void waitSeconds(double second){
         try {
             Thread.sleep((long) (second * 1000));
@@ -46,6 +31,31 @@ public class WebDriverUtil {
         }
     }
 
+    /**
+     * 打开一个新tab页，返回该tab页的window handle
+     * @param driver
+     * @param url
+     * @return
+     */
+    public static String openNewTab(WebDriver driver, String url){
+        Set<String> set1 = driver.getWindowHandles();
+        ((JavascriptExecutor)driver).executeScript("window.open('" + url + "','_blank');");
+        waitSeconds(1);
+        Set<String> set2 = driver.getWindowHandles();
+        for(String temp : set2){
+            if(!set1.contains(temp)){
+                return temp;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 检查当前元素是否存在
+     * @param selector
+     * @param driver
+     * @return
+     */
     public static WebElement isElementExist(By selector, WebDriver driver){
         try {
             return driver.findElement(selector);
@@ -56,6 +66,12 @@ public class WebDriverUtil {
         return null;
     }
 
+    /**
+     * 检查当前元素列表是否存在
+     * @param selector
+     * @param driver
+     * @return
+     */
     public static List<WebElement> isElementsExist(By selector, WebDriver driver){
         try {
             return driver.findElements(selector);
@@ -66,14 +82,84 @@ public class WebDriverUtil {
         return null;
     }
 
-    public static void switchToCurrentPage(WebDriver driver) {
+    /**
+     * 切换到一个不是当前页面的页面
+     * @param driver
+     */
+    public static void changeWindow(WebDriver driver){
+        // 获取当前页面句柄
         String handle = driver.getWindowHandle();
-        for (String tempHandle : driver.getWindowHandles()) {
-           if(tempHandle.equals(handle)) {
-                driver.close();
-           }else {
-                driver.switchTo().window(tempHandle);
-           }
-       }
+        // 获取所有页面的句柄，并循环判断不是当前的句柄，就做选取switchTo()
+        for (String handles : driver.getWindowHandles()) {
+            if (handles.equals(handle))
+                continue;
+            driver.switchTo().window(handles);
+        }
     }
+
+    /**
+     * 切换到特定句柄页面
+     * @param driver
+     */
+    public static void changeWindowTo(WebDriver driver,String handle){
+        for (String tmp : driver.getWindowHandles()) {
+            if (tmp.equals(handle)){
+                driver.switchTo().window(handle);
+                break;
+            }
+        }
+    }
+
+    /**
+     * 关闭当前浏览器的当前页面
+     * @param driver
+     */
+    public static void closeCurrentTab(WebDriver driver){
+        driver.close();
+    }
+
+    /**
+     * 滑动滑动条
+     * @param driver
+     * @param num
+     */
+    public static void scrollWeibo(WebDriver driver, int num){
+        log.info("控制滑动条向下滑动{}像素", num);
+        String js1 =  "var top = document.documentElement.scrollTop + " + num
+                + "; scrollTo(0, top)";
+        String js2 = "document.documentElement.scrollTop = document.documentElement.scrollTop + " + num;
+        JavascriptExecutor jsExecutor = (JavascriptExecutor) driver;
+        if (jsExecutor.executeScript(js1) == null){
+            log.info("第一条语句无效");
+            jsExecutor.executeScript(js2);
+
+        }
+
+        waitSeconds(1);
+    }
+
+    public static void scrollToBottom(WebDriver driver){
+        log.info("滑动滚动条到底部");
+        scrollWeibo(driver, 20000);
+    }
+
+    public static Set<Cookie> getCookies(WebDriver driver){
+        return driver.manage().getCookies();
+    }
+
+    public static void addCookies(WebDriver driver, Set<Cookie> cookieSet){
+        cookieSet.forEach(cookie -> driver.manage().addCookie(cookie));
+        cookieSet.forEach(x -> log.info(x + ""));
+    }
+
+    public static Object jsExecuter(WebDriver driver, String js, Object param){
+        return ((JavascriptExecutor)driver).executeScript(js, param);
+    }
+    public static Object jsExecuter(WebDriver driver, String js){
+        return ((JavascriptExecutor)driver).executeScript(js);
+    }
+
+
+
+
 }

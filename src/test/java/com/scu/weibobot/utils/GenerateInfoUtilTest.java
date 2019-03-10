@@ -9,7 +9,7 @@ import static org.junit.Assert.*;
 public class GenerateInfoUtilTest {
 
     @Test
-    public void generateBotInfo() {
+    public void generateBotInfo() throws InterruptedException {
         System.out.println(GenerateInfoUtil.generateNickName());
 //        System.out.println(GenerateInfoUtil.generateImgSrc());
 

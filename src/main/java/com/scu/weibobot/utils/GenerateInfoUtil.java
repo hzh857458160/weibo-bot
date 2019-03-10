@@ -1,6 +1,7 @@
 package com.scu.weibobot.utils;
 
-import com.scu.weibobot.domain.consts.BotInfoConst;
+import com.scu.weibobot.domain.Consts;
+import com.scu.weibobot.taskexcuter.WebDriverPool;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -12,16 +13,16 @@ import java.util.*;
 
 import static com.scu.weibobot.utils.WebDriverUtil.waitSeconds;
 
+
 @Slf4j
 public class GenerateInfoUtil {
     private static Random random = new Random();
     private static String nickName = null;
     private static String imgSrc = null;
-    private static WebDriver driver = null;
 
 
     //生成昵称
-    public static String generateNickName(){
+    public static String generateNickName() throws InterruptedException {
         if (nickName == null){
             getNicknameAndImgSrc();
         }
@@ -33,16 +34,12 @@ public class GenerateInfoUtil {
 
     //生成昵称后缀
     public static String addSuffixToNickName(String tempName){
-        Set<Integer> set = new HashSet<>();
-        while(set.size() < 2){
-            set.add(random.nextInt(BotInfoConst.NICKNAME_SUFFIX.length));
-        }
-        StringBuilder nickNameSb = new StringBuilder(tempName);
-        Object[] ints = set.toArray();
-        for (Object temp : ints){
-            nickNameSb.append(BotInfoConst.NICKNAME_SUFFIX[(int) temp]);
-        }
-        return nickNameSb.toString();
+        int ran = random.nextInt(Consts.NICKNAME_SUFFIX.length);
+        return tempName + Consts.NICKNAME_SUFFIX[ran];
+    }
+
+    public static String delSuffix(String tempName){
+        return tempName.substring(0, nickName.length() - 1);
     }
 
     /**
@@ -60,13 +57,13 @@ public class GenerateInfoUtil {
     public static String generateInterests(){
         Set<Integer> set = new HashSet<>();
         while(set.size() < 3){
-            set.add(random.nextInt(BotInfoConst.INTERESTS.length));
+            set.add(random.nextInt(Consts.INTERESTS.length));
         }
 
-        StringBuilder interestSb = new StringBuilder("#");
+        StringBuilder interestSb = new StringBuilder();
         Object[] ints = set.toArray();
         for (Object temp : ints){
-            interestSb.append(BotInfoConst.INTERESTS[(int) temp]) .append("#");
+            interestSb.append(Consts.INTERESTS[(int) temp]) .append("#");
         }
 
         return interestSb.toString();
@@ -76,7 +73,7 @@ public class GenerateInfoUtil {
      * 生成头像图片地址
      * @return
      */
-    public static String generateImgSrc(){
+    public static String generateImgSrc() throws InterruptedException {
         if (imgSrc == null) {
             getNicknameAndImgSrc();
         }
@@ -94,7 +91,7 @@ public class GenerateInfoUtil {
      * 例如:四川 成都 22-1
      */
     public static int generateLocation(){
-        return random.nextInt(BotInfoConst.PROVICE.length);
+        return random.nextInt(Consts.PROVICE.length);
     }
 
     /**
@@ -161,11 +158,11 @@ public class GenerateInfoUtil {
         int ran = random.nextInt(100);
         String result;
         if (ran < 7){
-            result = BotInfoConst.BOT_LEVEL[0];
+            result = Consts.BOT_LEVEL[0];
         } else if (ran < (7 + 59)){
-            result = BotInfoConst.BOT_LEVEL[1];
+            result = Consts.BOT_LEVEL[1];
         } else {
-            result = BotInfoConst.BOT_LEVEL[2];
+            result = Consts.BOT_LEVEL[2];
         }
         return result;
     }
@@ -175,68 +172,71 @@ public class GenerateInfoUtil {
      * 来生成相应的昵称与头像地址
      * @return
      */
-    private static void getNicknameAndImgSrc(){
+    private static void getNicknameAndImgSrc() throws InterruptedException {
         String url = "https://music.163.com/";
-        if (driver == null){
-            driver = WebDriverUtil.getWebDriver();
-        }
-        driver.get(url);
-        waitSeconds(3);
-        //点击歌单选项
-        driver.findElement(By.cssSelector("#g_nav2 > div > ul > li:nth-child(3)")).click();
-        log.info("点击首页的歌单选项");
-        waitSeconds(2);
-        //切换到frame中
-        driver.switchTo().frame("g_iframe");
-        //随机选择一个页码（1~8）
-        scrollToBottom();
-        Random random = new Random();
-        int ran = random.nextInt(8) + 1;
-        driver.findElement(By.cssSelector("#m-pl-pager > div > a:nth-child("+ (ran + 1) +")")).click();
-        log.info("选择第{}页歌单", ran);
-        waitSeconds(2);
-        //随机点进一个歌单
-        int ran1 = random.nextInt(35) + 1;
-        driver.findElement(By.cssSelector("#cateListBox + ul > li:nth-child("+ ran1 +")")).click();
-        log.info("选择该页第{}个歌单", ran1);
-        waitSeconds(2);
+        WebDriver driver = null;
 
-        //随机选择一个评论页码（1~8）
-        scrollToBottom();
-        List<WebElement> pageList =  WebDriverUtil.isElementsExist(By.cssSelector("a.zpgi:not([style])"), driver);
-        if (pageList != null){
-            int ran2 = random.nextInt(pageList.size());
-            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", pageList.get(ran2));
-//            pageList.get(ran2).click();
-            log.info("选择歌单第{}页评论", ran2);
+        try {
+            driver = WebDriverPool.getWebDriver();
+            driver.get(url);
+            waitSeconds(3);
+            //点击歌单选项
+            driver.findElement(By.cssSelector("#g_nav2 > div > ul > li:nth-child(3)")).click();
+            log.info("点击首页的歌单选项");
             waitSeconds(2);
-        } else {
-            log.info("只有一页评论，没有页码");
+            //切换到frame中
+            driver.switchTo().frame("g_iframe");
+            //随机选择一个页码（1~8）
+            WebDriverUtil.scrollToBottom(driver);
+            Random random = new Random();
+            int ran = random.nextInt(8) + 1;
+            driver.findElement(By.cssSelector("#m-pl-pager > div > a:nth-child("+ (ran + 1) +")")).click();
+            log.info("选择第{}页歌单", ran);
+            waitSeconds(2);
+            //随机点进一个歌单
+            int ran1 = random.nextInt(35) + 1;
+            driver.findElement(By.cssSelector("#cateListBox + ul > li:nth-child("+ ran1 +")")).click();
+            log.info("选择该页第{}个歌单", ran1);
+            waitSeconds(2);
+
+            //随机选择一个评论页码（1~8）
+            WebDriverUtil.scrollToBottom(driver);
+            List<WebElement> pageList =  WebDriverUtil.isElementsExist(By.cssSelector("a.zpgi:not([style])"), driver);
+            if (pageList != null){
+                int ran2 = random.nextInt(pageList.size());
+                ((JavascriptExecutor) driver).executeScript("arguments[0].click();", pageList.get(ran2));
+//            pageList.get(ran2).click();
+                log.info("选择歌单第{}页评论", ran2);
+                waitSeconds(2);
+            } else {
+                log.info("只有一页评论，没有页码");
+            }
+
+            //随机选择一个评论(1~20)
+            List<WebElement> commentList = driver.findElements(By.cssSelector("div.itm[data-id]"));
+            log.info("该歌单总共有{}个评论", commentList.size());
+            if (commentList.size() <= 0){
+                log.error("评论数量错误");
+            }
+            int ran3 = random.nextInt(commentList.size());
+            int ran4 = random.nextInt(commentList.size());
+            log.info("获取到第{}个和第{}个评论", ran3, ran4);
+            WebElement specHeadImg = commentList.get(ran3).findElement(By.cssSelector("div.head > a > img"));
+            WebElement specNickname = commentList.get(ran4).findElement(By.cssSelector("div.cntwrap > div > div > a"));
+
+            //微博h5版本无法设置头像
+            imgSrc = specHeadImg.getAttribute("src");
+            nickName = specNickname.getText();
+            log.info("imgSrc:{}, nickName:{}", imgSrc, nickName);
+        } finally {
+            if (driver != null){
+                WebDriverPool.closeCurrentWebDriver(driver);
+            }
         }
 
-        //随机选择一个评论(1~20)
-        List<WebElement> commentList = driver.findElements(By.cssSelector("div.itm[data-id]"));
-        log.info("该歌单总共有{}个评论", commentList.size());
-        if (commentList.size() <= 0){
-            log.error("评论数量错误");
-        }
-        int ran3 = random.nextInt(commentList.size());
-        int ran4 = random.nextInt(commentList.size());
-        log.info("获取到第{}个和第{}个评论", ran3, ran4);
-        WebElement specHeadImg = commentList.get(ran3).findElement(By.cssSelector("div.head > a > img"));
-        WebElement specNickname = commentList.get(ran4).findElement(By.cssSelector("div.cntwrap > div > div > a"));
 
-        //微博h5版本无法设置头像
-        imgSrc = specHeadImg.getAttribute("src");
-        nickName = specNickname.getText();
-        log.info("imgSrc:{}, nickName:{}", imgSrc, nickName);
-        driver.quit();
+
     }
 
-    private static void scrollToBottom(){
-        log.info("滑动滚动条到底部");
-        String js =  "scrollTo(0, 20000)";
-        ((JavascriptExecutor) driver).executeScript(js);
-    }
 
 }

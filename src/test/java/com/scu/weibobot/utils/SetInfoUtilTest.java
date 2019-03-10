@@ -1,19 +1,52 @@
 package com.scu.weibobot.utils;
 
+import com.scu.weibobot.service.BotInfoService;
+import com.scu.weibobot.service.WeiboAccountService;
+import com.scu.weibobot.taskexcuter.WebDriverPool;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.openqa.selenium.WebDriver;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.stereotype.Component;
+import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.annotation.PostConstruct;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
+@SpringBootTest
+@RunWith(SpringRunner.class)
 public class SetInfoUtilTest {
 
-    @Test
-    public void setBotInfo() {
-        String username = "kgsrchbjaezhmr-vpb2@yahoo.com";
-        String password = "WAsbjlttuv03";
+    @Autowired
+    private BotInfoService botInfoService;
 
-        WeiboOpUtil.loginWeibo(username, password);
+    @Autowired
+    private WeiboAccountService accountService;
+
+
+    @Test
+    public void setBotInfo() throws InterruptedException {
+
+        String username = "jwnilywauekgjgs-aae25@yahoo.com";
+        String password = "WAsbjlttuv07";
+
+        WebDriver driver = WebDriverPool.getWebDriver();
+        WeiboOpUtil.loginWeibo(driver, username, password);
+        long accountId = accountService.findByUsername(username).getAccountId();
+        String interests = botInfoService.findBotInfoByAccountId(accountId).getInterests();
+        System.out.println("interests = " + interests);
+        List<String> list = new ArrayList<>(Arrays.asList(interests.split("#")));
+        list.forEach(System.out::println);
+
+        WeiboOpUtil.subscribeWeiboByInterest(driver, list);
+
+        WebDriverPool.closeCurrentWebDriver(driver);
 
     }
 }
