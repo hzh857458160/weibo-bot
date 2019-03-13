@@ -1,10 +1,14 @@
 package com.scu.weibobot.service;
 
 import com.scu.weibobot.domain.BotInfo;
+import com.scu.weibobot.domain.ProxyIp;
 import com.scu.weibobot.domain.WeiboAccount;
 import com.scu.weibobot.domain.Consts;
+import com.scu.weibobot.taskexcuter.WebDriverPool;
 import com.scu.weibobot.taskexcuter.WeiboBotExecutor;
+import com.scu.weibobot.utils.ProxyUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.openqa.selenium.WebDriver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -21,10 +25,10 @@ public class ScheduleService {
 
     @Autowired
     private WeiboAccountService accountService;
-
     @Autowired
     private BotInfoService botInfoService;
-
+    @Autowired
+    private ProxyIpService proxyIpService;
     @Autowired
     private ThreadPoolTaskExecutor taskExecutor;
 
@@ -48,6 +52,34 @@ public class ScheduleService {
             //使用线程池调用WeiboBotExecuter的run方法
             taskExecutor.execute(botExecutor);
         }
+
+    }
+
+    @Scheduled(cron = Consts.RUN_PER_DAY_CRON)
+    public void searchForProxy(){
+        WebDriver driver = null;
+        try {
+            driver = WebDriverPool.getWebDriver();
+            List<String> locationList = botInfoService.findAllBotLocations();
+            ProxyUtil.initProxyLocation(locationList);
+            List<ProxyIp> proxyIpList = new ArrayList<>(300);
+            proxyIpList.addAll(ProxyUtil.crawlFrom89IP(driver));
+            proxyIpList.addAll(ProxyUtil.crawlFromKUAIDAILI(driver));
+            proxyIpList.addAll(ProxyUtil.crawlFromQIYUN(driver));
+            proxyIpList.addAll(ProxyUtil.crawlFromZDAYE(driver));
+            proxyIpService.addAllProxyIp(proxyIpList);
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+
+        } finally {
+            if (driver != null){
+                WebDriverPool.closeAndReturnToPool(driver);
+            }
+        }
+
+
+
 
     }
 

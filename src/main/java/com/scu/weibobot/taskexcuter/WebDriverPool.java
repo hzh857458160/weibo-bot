@@ -1,5 +1,6 @@
 package com.scu.weibobot.taskexcuter;
 
+import com.scu.weibobot.domain.ProxyIp;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -37,11 +38,6 @@ public class WebDriverPool {
 
         chromeOptions.setExperimentalOption("prefs", prefs);
 
-        /* Add the WebDriver proxy capability.
-        Proxy proxy = new Proxy();
-        proxy.setHttpProxy("myhttpproxy:3337");
-        capabilities.setCapability("proxy", proxy);
-        */
     }
 
     private WebDriverPool() {
@@ -51,6 +47,9 @@ public class WebDriverPool {
         innerQueue = new LinkedBlockingDeque<>(poolSize);
     }
 
+
+//    String proxy = proxyIp.getIp() + ":" + proxyIp.getPort();
+//                    chromeOptions.addArguments("--proxy-server=http://" + proxy);
     public static WebDriver getWebDriver() throws InterruptedException {
         WebDriver poll = innerQueue.poll();
         if (poll != null) {

@@ -7,6 +7,12 @@ public class Consts {
             "广东", "广西", "海南", "重庆", "四川", "贵州", "云南", "西藏", "陕西", "甘肃", "青海",
             "宁夏", "新疆", "台湾", "香港", "澳门"};
 
+    public static final String[] PROVINCE_SPELL = {"beijing", "tianjin", "hebei", "shanxi", "neimenggu", "liaonig",
+            "jilin",  "heilongjiang", "shanghai", "jiangsu", "zhejiang", "anhui", "fujian", "jiangxi", "shandong",
+            "henan", "hubei", "hunan", "guangdong", "guangxi", "hainan", "chongqin", "sichuang", "guizhou",
+            "yunnan", "xizang", "shanxi", "gansu", "qinghai", "ningxia", "xinjiang", "taiwan", "xianggang", "aomen"};
+
+
 
     public static final String[] BOT_LEVEL = {"N", "H", "VH"};
 
@@ -26,6 +32,10 @@ public class Consts {
 
     //每到整点会运行
     public static final String RUN_PER_HOUR_CRON = " 0 29 * * *  ?";
+    //每天的0点与21点会运行
+    public static final String RUN_PER_DAY_CRON = "0 0 0,21 * * ?";
+
+
 
     //不同使用度之间的时间点数
     public static final int[] VERY_HIGH_CLOCK = {12, 13, 14};
