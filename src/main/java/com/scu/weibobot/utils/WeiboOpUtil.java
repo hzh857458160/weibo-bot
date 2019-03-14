@@ -335,6 +335,7 @@ public class WeiboOpUtil {
         if (saveBtn != null){
             saveBtn.click();
         }
+        driver.switchTo().alert().accept();
     }
 
     private static WebElement getFocusWeibo(WebDriver driver, int index){

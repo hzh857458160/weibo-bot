@@ -54,18 +54,26 @@ public class GenerateInfoUtil {
      * 生成兴趣爱好，从兴趣库中随机获取三个兴趣
      * @return
      */
-    public static String generateInterests(){
+    public static String generateInterests(int gender){
+        String[] tempArray, a, b;
+        if (gender == 0){
+            a = Consts.INTERESTS_BOY;
+        } else {
+            a = Consts.INTERESTS_GIRL;
+        }
+        b = Consts.INTERESTS_NEUTRAL;
+        tempArray = new String[a.length + b.length];
+        System.arraycopy(a, 0, tempArray, 0, a.length);
+        System.arraycopy(b, 0, tempArray, a.length, b.length);
+
         Set<Integer> set = new HashSet<>();
         while(set.size() < 3){
-            set.add(random.nextInt(Consts.INTERESTS.length));
+            set.add(random.nextInt(tempArray.length));
         }
-
         StringBuilder interestSb = new StringBuilder();
-        Object[] ints = set.toArray();
-        for (Object temp : ints){
-            interestSb.append(Consts.INTERESTS[(int) temp]) .append("#");
+        for (int tempInt : set){
+            interestSb.append(tempArray[tempInt]).append("#");
         }
-
         return interestSb.toString();
     }
 

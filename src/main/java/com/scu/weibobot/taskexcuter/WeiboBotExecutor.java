@@ -13,55 +13,52 @@ import java.util.Random;
 
 
 @Slf4j
-public class WeiboBotExecutor implements Runnable{
+public class WeiboBotExecutor implements Runnable {
 
     private BotInfo botInfo;
     private WeiboAccount weiboAccount;
 
-    public void setBotInfo(BotInfo botInfo){
+    public void setBotInfo(BotInfo botInfo) {
         this.botInfo = botInfo;
     }
 
-    public void setWeiboAccount(WeiboAccount weiboAccount){
+    public void setWeiboAccount(WeiboAccount weiboAccount) {
         this.weiboAccount = weiboAccount;
     }
 
 
-    public void run(){
-        try{
-            if (botInfo == null || weiboAccount == null){
-                log.error("WeiboBotExecutor参数有误 [botInfo:{}, weiboAccount:{}]", botInfo, weiboAccount);
-                return;
-            }
-            //获取使用度对应的概率
-            double prob = TimeUtil.getProbability(botInfo.getBotLevel());
-            log.info("对应使用度概率为{}", prob);
-            //随机数
-            double nowProb = new Random().nextDouble();
-            log.info("当前随机数为{}", nowProb);
-            if (nowProb < prob){
-                //进入微博，模拟操作
-                log.info("进入微博，模拟操作");
-                doSthInWeibo(weiboAccount.getUsername(), weiboAccount.getPassword());
-            }
+    public void run() {
 
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if (botInfo == null || weiboAccount == null) {
+            log.error("WeiboBotExecutor参数有误 [botInfo:{}, weiboAccount:{}]", botInfo, weiboAccount);
+            return;
         }
+        //获取使用度对应的概率
+        double prob = TimeUtil.getProbability(botInfo.getBotLevel());
+        log.info("对应使用度概率为{}", prob);
+        //随机数
+        double nowProb = new Random().nextDouble();
+        log.info("当前随机数为{}", nowProb);
+        if (nowProb < prob) {
+            //进入微博，模拟操作
+            log.info("进入微博，模拟操作");
+            doSomethingInWeibo();
+        }
+
 
     }
 
-    private void doSthInWeibo(String username, String password) throws InterruptedException {
-        WebDriver driver = WebDriverPool.getWebDriver();
-        WeiboOpUtil.loginWeibo(driver, username, password);
+    private void doSomethingInWeibo() {
+        WebDriver driver = WebDriverPool.getWebDriver(botInfo);
+        WeiboOpUtil.loginWeibo(driver, weiboAccount.getUsername(), weiboAccount.getPassword());
         Random random = new Random();
         WeiboOpUtil.likeWeibo(driver, random.nextInt(3));
         WebDriverUtil.scrollWeibo(driver, 500);
-        WeiboOpUtil.likeWeibo(driver,random.nextInt(3) + 3);
+        WeiboOpUtil.likeWeibo(driver, random.nextInt(3) + 3);
         WebDriverUtil.scrollWeibo(driver, 500);
-        WeiboOpUtil.reportWeibo(driver,random.nextInt(3) + 6, "");
-        WeiboOpUtil.postWeibo(driver,"测试，当前时间为" + LocalDateTime.now());
-        WebDriverPool.closeAndReturnToPool(driver);
+        WeiboOpUtil.reportWeibo(driver, random.nextInt(3) + 6, "");
+//        WeiboOpUtil.postWeibo(driver, "测试，当前时间为" + LocalDateTime.now());
+        WebDriverPool.closeCurrentWebDriver(driver);
     }
 
 }

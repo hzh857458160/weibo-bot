@@ -10,10 +10,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.URL;
-import java.net.URLConnection;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,8 +37,9 @@ public class ProxyUtil {
 
 
     public static List<ProxyIp> crawlFromKUAIDAILI(WebDriver driver){
-        int page = 20;
-        int capacity = 20;
+        log.info("进入crawlFromKUAIDAILI()");
+        int page = 1;
+        int capacity = 10;
         List<ProxyIp> ipList = new ArrayList<>(capacity);
         long startTime = System.currentTimeMillis();
         while (ipList.size() < capacity){
@@ -57,7 +55,7 @@ public class ProxyUtil {
                 for (int i = 0; i < list.size(); i++){
                     WebElement ipLine = list.get(i);
                     String location = ipLine.findElement(By.cssSelector("td[data-title=\"位置\"]")).getText();
-                    System.out.println(location);
+//                    System.out.println(location);
                     location = parseLocation(location);
                     if (!locationCheck(location)){
                         continue;
@@ -144,38 +142,44 @@ public class ProxyUtil {
         return province + city;
     }
 
+    public static List<ProxyIp> crawlFrom89IP(WebDriver driver, String location){
+        log.info("进入crawlFrom89IP(location = {})");
+        List<ProxyIp> ipList = new ArrayList<>(30);
+        String province = getProvinceFromLocation(location);
+        String tempUrl = IP89_PROXY_URL.replace("ADDRESS_REPLACE", province);
 
-    public static List<ProxyIp> crawlFrom89IP(WebDriver driver){
-        List<ProxyIp> ipList = new ArrayList<>(50);
-        for (String location : PROVINCE_LIST){
-            String province = getProvinceFromLocation(location);
-            String tempUrl = IP89_PROXY_URL.replace("ADDRESS_REPLACE", province);
-
-            driver.get(tempUrl);
-            waitSeconds(3);
-            String text = driver.findElement(By.cssSelector("h1[align = 'center'] + hr + div")).getText();
-            String[] lines = text.split("\n");
-
-            for (String line : lines){
-                if (line.contains("高效高匿名代理IP提取地址")){
-                    continue;
-                }
-                int index = line.indexOf(":");
-                ProxyIp mProxyIp = new ProxyIp();
-                mProxyIp.setIp(line.substring(0, index));
-                mProxyIp.setPort(Integer.parseInt(line.substring(index + 1)));
-                mProxyIp.setLocation(province);
-                if (isValid(mProxyIp)){
-                    mProxyIp.setAvailable(true);
-                    ipList.add(mProxyIp);
-                }
+        driver.get(tempUrl);
+        waitSeconds(3);
+        String text = driver.findElement(By.cssSelector("h1[align = 'center'] + hr + div")).getText();
+        String[] lines = text.split("\n");
+        for (String line : lines){
+            if (line.contains("高效高匿名代理IP提取地址")){
+                continue;
+            }
+            int index = line.indexOf(":");
+            ProxyIp mProxyIp = new ProxyIp();
+            mProxyIp.setIp(line.substring(0, index));
+            mProxyIp.setPort(Integer.parseInt(line.substring(index + 1)));
+            mProxyIp.setLocation(province);
+            if (isValid(mProxyIp)){
+                mProxyIp.setAvailable(true);
+                ipList.add(mProxyIp);
             }
         }
+        return ipList;
+    }
 
+    public static List<ProxyIp> crawlFrom89IP(WebDriver driver){
+        log.info("进入crawlFrom89IP()");
+        List<ProxyIp> ipList = new ArrayList<>(50);
+        for (String location : PROVINCE_LIST){
+            ipList.addAll(crawlFrom89IP(driver, location));
+        }
         return ipList;
     }
 
     public static List<ProxyIp> crawlFromZDAYE(WebDriver driver){
+        log.info("进入crawlFromZDAYE()");
         List<ProxyIp> ipList = new ArrayList<>(50);
 
         for (int i = 0; i < 15; i++){
@@ -217,6 +221,7 @@ public class ProxyUtil {
     }
 
     public static List<ProxyIp> crawlFromQIYUN(WebDriver driver){
+        log.info("进入crawlFromQIYUN()");
         List<ProxyIp> ipList = new ArrayList<>(25);
         int page = 1;
         while(ipList.size() < 25){
@@ -227,7 +232,7 @@ public class ProxyUtil {
             List<WebElement> lineList = driver.findElements(By.cssSelector("tbody > tr"));
             for (WebElement line : lineList){
                 String location = line.findElement(By.cssSelector("td[data-title = '位置']")).getText();
-                System.out.println(location);
+//                System.out.println(location);
                 location  = parseLocationInQIYUN(location);
                 if (!locationCheck(location)){
                     continue;
@@ -273,7 +278,7 @@ public class ProxyUtil {
     }
 
 
-    private static boolean isValid(ProxyIp proxyIp){
+    public static boolean isValid(ProxyIp proxyIp){
         //Proxy类代理方法
         URL url;
         InetSocketAddress addr;
@@ -305,13 +310,17 @@ public class ProxyUtil {
             return "";
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
         StringBuilder sb = new StringBuilder();
-        String line = null;
+        String line;
         try {
             while ((line = reader.readLine()) != null) {
                 sb.append(line + "/n");
             }
+        } catch (SocketTimeoutException e){
+            log.warn(e.getMessage());
+
         } catch (IOException e) {
             e.printStackTrace();
+
         } finally {
             try {
                 is.close();

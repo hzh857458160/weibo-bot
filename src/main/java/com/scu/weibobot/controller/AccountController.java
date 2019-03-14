@@ -1,6 +1,7 @@
 package com.scu.weibobot.controller;
 
 import com.scu.weibobot.domain.BotInfo;
+import com.scu.weibobot.domain.Consts;
 import com.scu.weibobot.domain.WeiboAccount;
 import com.scu.weibobot.service.BotInfoService;
 import com.scu.weibobot.service.WeiboAccountService;
@@ -38,7 +39,8 @@ public class AccountController {
             String username = request.getParameter("username");
             String password = request.getParameter("password");
 
-            driver = WebDriverPool.getWebDriver();
+            int locationNum = GenerateInfoUtil.generateLocation();
+            driver = WebDriverPool.getWebDriver(Consts.PROVINCE[locationNum]);
             //验证账号是否能够登陆微博
             if (!WeiboOpUtil.loginWeibo(driver, username, password)){
                 log.info("账号密码有误，请确认后重试");
@@ -49,8 +51,7 @@ public class AccountController {
             String nickName = GenerateInfoUtil.generateNickName();
             int gender = GenerateInfoUtil.generateGender();
             LocalDate birthDate = GenerateInfoUtil.generateBirthDate();
-            int locationNum = GenerateInfoUtil.generateLocation();
-            String interests = GenerateInfoUtil.generateInterests();
+            String interests = GenerateInfoUtil.generateInterests(gender);
 
             WeiboOpUtil.setNickName(driver, nickName);
             WeiboOpUtil.setGender(driver, gender);

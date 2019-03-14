@@ -34,21 +34,16 @@ public class ScheduleService {
 
     @Scheduled(cron= Consts.RUN_PER_HOUR_CRON)
     public void coreJob(){
-        log.info("{}", LocalTime.now());
-//        log.info("当前线程数目为{}", Thread.activeCount());
-        //获取所有可用的微博机器人账号（需要缓存）
+        log.info("进入定时任务coreJob() {}", LocalTime.now());
+        //获取所有可用的微博机器人账号
         List<WeiboAccount> weiboAccountList = accountService.findAllAccount();
-        List<BotInfo> botInfoList = new ArrayList<>();
         //根据账号去寻找对应的资料
         for (WeiboAccount account : weiboAccountList){
             BotInfo temp = botInfoService.findBotInfoByAccountId(account.getAccountId());
-            botInfoList.add(temp);
-
             //然后设置好WeiboBotExecuter的属性
             WeiboBotExecutor botExecutor = new WeiboBotExecutor();
             botExecutor.setBotInfo(temp);
             botExecutor.setWeiboAccount(account);
-
             //使用线程池调用WeiboBotExecuter的run方法
             taskExecutor.execute(botExecutor);
         }
@@ -57,10 +52,12 @@ public class ScheduleService {
 
     @Scheduled(cron = Consts.RUN_PER_DAY_CRON)
     public void searchForProxy(){
+        log.info("进入定时任务searchForProxy() {}", LocalTime.now());
         WebDriver driver = null;
         try {
             driver = WebDriverPool.getWebDriver();
             List<String> locationList = botInfoService.findAllBotLocations();
+            log.info("查找到所有机器人的地址 list size = {}", locationList.size());
             ProxyUtil.initProxyLocation(locationList);
             List<ProxyIp> proxyIpList = new ArrayList<>(300);
             proxyIpList.addAll(ProxyUtil.crawlFrom89IP(driver));
@@ -69,18 +66,19 @@ public class ScheduleService {
             proxyIpList.addAll(ProxyUtil.crawlFromZDAYE(driver));
             proxyIpService.addAllProxyIp(proxyIpList);
 
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-
         } finally {
             if (driver != null){
-                WebDriverPool.closeAndReturnToPool(driver);
+                WebDriverPool.closeCurrentWebDriver(driver);
             }
         }
-
-
-
-
     }
+
+    @Scheduled(cron = Consts.RUN_PER_DAY_CRON)
+    public void cleanUselessProxy(){
+        log.info("进入定时任务cleanUselessProxy() {}", LocalTime.now());
+        proxyIpService.deleteAllUselessProxy();
+    }
+
+
 
 }

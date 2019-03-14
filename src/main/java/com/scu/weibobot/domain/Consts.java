@@ -16,10 +16,12 @@ public class Consts {
 
     public static final String[] BOT_LEVEL = {"N", "H", "VH"};
 
-    public static final String[] INTERESTS = {"生活", "经济", "运动", "互联网", "艺术", "阅读",
-            "美食", "动漫", "汽车", "足球", "教育", "摄影", "历史", "文化", "旅行", "职业", "金融",
-            "游戏", "篮球", "科技", "体育", "商业", "健康", "创业", "设计", "自然", "法律", "电影",
-            "音乐", "投资", "科学", "美女"};
+    public static final String[] INTERESTS_GIRL = {"瑜伽", "烘焙", "舞蹈", "明星", "美妆", };
+    public static final String[] INTERESTS_NEUTRAL = {"唱歌", "生活", "搞笑", "经济", "艺术", "阅读", "美食",
+            "动漫", "摄影", "历史", "文化", "旅行", "金融", "游戏", "健康", "设计", "自然", "法律", "电影",
+            "音乐", "综艺", "小说", "投资", "小说", "电视剧", "综艺", "家居"};
+    public static final String[] INTERESTS_BOY = { "运动", "互联网", "足球", "汽车", "篮球", "电脑", "体育",
+            "科学", "美女", "手机", "耳机", "下棋", "魔术", "搏击", "滑板", "说唱", "绘画"};
 
     public static final String[] NICKNAME_SUFFIX = {"a", "b", "c", "d", "e","f", "g", "h", "i", "j", "k",
             "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "-", "_", "1",
@@ -31,9 +33,9 @@ public class Consts {
             "com.alibaba.android.rimet/10487439 Channel/227200 language/zh-CN'";
 
     //每到整点会运行
-    public static final String RUN_PER_HOUR_CRON = " 0 29 * * *  ?";
-    //每天的0点与21点会运行
-    public static final String RUN_PER_DAY_CRON = "0 0 0,21 * * ?";
+    public static final String RUN_PER_HOUR_CRON = " 0 15 * * *  ?";
+    //每天的0点会运行
+    public static final String RUN_PER_DAY_CRON = "0 36 16 * * ?";
 
 
 
