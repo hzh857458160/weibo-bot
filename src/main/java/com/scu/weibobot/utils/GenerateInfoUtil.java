@@ -1,6 +1,6 @@
 package com.scu.weibobot.utils;
 
-import com.scu.weibobot.domain.Consts;
+import com.scu.weibobot.domain.consts.Consts;
 import com.scu.weibobot.taskexcuter.WebDriverPool;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
@@ -241,8 +241,6 @@ public class GenerateInfoUtil {
                 WebDriverPool.closeCurrentWebDriver(driver);
             }
         }
-
-
 
     }
 

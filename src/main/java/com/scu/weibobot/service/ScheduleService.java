@@ -3,7 +3,7 @@ package com.scu.weibobot.service;
 import com.scu.weibobot.domain.BotInfo;
 import com.scu.weibobot.domain.ProxyIp;
 import com.scu.weibobot.domain.WeiboAccount;
-import com.scu.weibobot.domain.Consts;
+import com.scu.weibobot.domain.consts.Consts;
 import com.scu.weibobot.taskexcuter.WebDriverPool;
 import com.scu.weibobot.taskexcuter.WeiboBotExecutor;
 import com.scu.weibobot.utils.ProxyUtil;

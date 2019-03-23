@@ -1,20 +1,39 @@
 package com.scu.weibobot.utils;
 
-import com.scu.weibobot.domain.Consts;
+import com.scu.weibobot.domain.consts.Consts;
+import com.scu.weibobot.service.RedisService;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.Select;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
 
 import static com.scu.weibobot.utils.WebDriverUtil.waitSeconds;
 
+
+@Component
 @Slf4j
 public class WeiboOpUtil {
     private static final String LOGIN_URL = "https://passport.weibo.cn/signin/login";
     private static final String BASE_URL = "https://m.weibo.cn";
-    private static Map<String, Set<Cookie>> cookieMap = new HashMap<>(20);
+    private static final int SECONDS_OF_ONE_DAY = 24 * 60 * 60;
+
+    @Autowired
+    private RedisService redisService;
+
+    public static WeiboOpUtil weiboOpUtil;
+
+    @PostConstruct
+    public void init() {
+        weiboOpUtil = this;
+    }
+
 
     /**
      * 登陆微博
@@ -24,12 +43,15 @@ public class WeiboOpUtil {
      * @return
      */
     public static boolean loginWeibo(WebDriver driver, String username, String password) {
-        boolean flag = cookieMap.containsKey(username);
+        boolean flag = weiboOpUtil.redisService.hasKey(username);
         log.info("当前是否存在cookies：{}", flag);
         if (flag){
-            Set<Cookie> cookieSet = cookieMap.get(username);
-            WebDriverUtil.addCookies(driver, cookieSet);
+            Set<Object> cookieSet = weiboOpUtil.redisService.sGet(username);
             driver.get(BASE_URL);
+            for (Object obj : cookieSet){
+                WebDriverUtil.addCookie(driver, (Cookie) obj);
+            }
+            driver.navigate().refresh();
             waitSeconds(3);
             return true;
         }
@@ -74,7 +96,7 @@ public class WeiboOpUtil {
             } else if (curUrl.contains("security.weibo.com/captcha/geetest")){
                 log.info("受到微博限制，进入身份验证");
                 waitSeconds(5);
-                break;
+                return true;
 
             } else {
                log.info("成功登陆到m.weibo.cn");
@@ -83,7 +105,9 @@ public class WeiboOpUtil {
 
         }
 
-        cookieMap.put(username, WebDriverUtil.getCookies(driver));
+        //将cookie缓存到redis中
+        Set<Cookie> cookieSet = WebDriverUtil.getCookies(driver);
+        weiboOpUtil.redisService.sSetAndTime(username, SECONDS_OF_ONE_DAY, cookieSet.toArray());
         return true;
     }
 

@@ -1,4 +1,4 @@
-package com.scu.weibobot.domain;
+package com.scu.weibobot.domain.consts;
 
 public class Consts {
 
@@ -7,11 +7,10 @@ public class Consts {
             "广东", "广西", "海南", "重庆", "四川", "贵州", "云南", "西藏", "陕西", "甘肃", "青海",
             "宁夏", "新疆", "台湾", "香港", "澳门"};
 
-    public static final String[] PROVINCE_SPELL = {"beijing", "tianjin", "hebei", "shanxi", "neimenggu", "liaonig",
-            "jilin",  "heilongjiang", "shanghai", "jiangsu", "zhejiang", "anhui", "fujian", "jiangxi", "shandong",
-            "henan", "hubei", "hunan", "guangdong", "guangxi", "hainan", "chongqin", "sichuang", "guizhou",
-            "yunnan", "xizang", "shanxi", "gansu", "qinghai", "ningxia", "xinjiang", "taiwan", "xianggang", "aomen"};
-
+//    public static final String[] PROVINCE_SPELL = {"beijing", "tianjin", "hebei", "shanxi", "neimenggu", "liaonig",
+//            "jilin",  "heilongjiang", "shanghai", "jiangsu", "zhejiang", "anhui", "fujian", "jiangxi", "shandong",
+//            "henan", "hubei", "hunan", "guangdong", "guangxi", "hainan", "chongqin", "sichuang", "guizhou",
+//            "yunnan", "xizang", "shanxi", "gansu", "qinghai", "ningxia", "xinjiang", "taiwan", "xianggang", "aomen"};
 
 
     public static final String[] BOT_LEVEL = {"N", "H", "VH"};
@@ -27,13 +26,13 @@ public class Consts {
             "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "-", "_", "1",
             "2", "3", "4", "5", "6", "7", "8", "9", "0"};
 
-    private static final String MOBILE_USER_AGENT = "user-agent = 'Mozilla/5.0 (Linux; U; Android 8.1.0; zh-CN; " +
-            "BLA-AL00 Build/HUAWEIBLA-AL00) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/57.0.2987.108 " +
-            "UCBrowser/11.9.4.974 UWS/2.13.1.48 Mobile Safari/537.36 AliApp(DingTalk/4.5.11) " +
-            "com.alibaba.android.rimet/10487439 Channel/227200 language/zh-CN'";
+//    private static final String MOBILE_USER_AGENT = "user-agent = 'Mozilla/5.0 (Linux; U; Android 8.1.0; zh-CN; " +
+//            "BLA-AL00 Build/HUAWEIBLA-AL00) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/57.0.2987.108 " +
+//            "UCBrowser/11.9.4.974 UWS/2.13.1.48 Mobile Safari/537.36 AliApp(DingTalk/4.5.11) " +
+//            "com.alibaba.android.rimet/10487439 Channel/227200 language/zh-CN'";
 
     //每到整点会运行
-    public static final String RUN_PER_HOUR_CRON = " 0 15 * * *  ?";
+    public static final String RUN_PER_HOUR_CRON = " 0 30 * * *  ?";
     //每天的0点会运行
     public static final String RUN_PER_DAY_CRON = "0 36 16 * * ?";
 

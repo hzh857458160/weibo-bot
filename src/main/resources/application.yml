@@ -16,3 +16,8 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+  redis:
+    host: 47.100.49.45
+    port: 6379
+    password: N0GameN0L1feSCU.

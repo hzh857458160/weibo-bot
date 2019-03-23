@@ -1,6 +1,6 @@
 package com.scu.weibobot.utils;
 
-import com.scu.weibobot.domain.Consts;
+import com.scu.weibobot.domain.consts.Consts;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalTime;

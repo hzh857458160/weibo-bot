@@ -1,7 +1,7 @@
 package com.scu.weibobot.controller;
 
 import com.scu.weibobot.domain.BotInfo;
-import com.scu.weibobot.domain.Consts;
+import com.scu.weibobot.domain.consts.Consts;
 import com.scu.weibobot.domain.WeiboAccount;
 import com.scu.weibobot.service.BotInfoService;
 import com.scu.weibobot.service.WeiboAccountService;
@@ -32,7 +32,6 @@ public class AccountController {
     @PostMapping("/account")
     public void addNewBotAccount(HttpServletRequest request, HttpServletResponse response) throws InterruptedException {
         WebDriver driver = null;
-
         try {
             response.setHeader("Access-Control-Allow-Origin", "*");
             //接收post提交的账号与密码
@@ -46,6 +45,7 @@ public class AccountController {
                 log.info("账号密码有误，请确认后重试");
                 return;
             }
+
             WeiboAccount account = new WeiboAccount(0L, username, password);
             //先登录账号修改资料(需要返回地址)
             String nickName = GenerateInfoUtil.generateNickName();

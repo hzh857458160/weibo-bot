@@ -3,6 +3,7 @@ package com.scu.weibobot.utils;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
 
+import java.io.File;
 import java.util.List;
 import java.util.Set;
 
@@ -147,9 +148,13 @@ public class WebDriverUtil {
         return driver.manage().getCookies();
     }
 
+    public static void addCookie(WebDriver driver, Cookie cookie){
+        driver.manage().addCookie(cookie);
+    }
+
     public static void addCookies(WebDriver driver, Set<Cookie> cookieSet){
-        cookieSet.forEach(cookie -> driver.manage().addCookie(cookie));
-        cookieSet.forEach(x -> log.info(x + ""));
+        cookieSet.forEach(cookie -> addCookie(driver, cookie));
+        driver.navigate().refresh();
     }
 
     public static Object jsExecuter(WebDriver driver, String js, Object param){
@@ -160,6 +165,11 @@ public class WebDriverUtil {
     }
 
 
-
+    public void getScreenShot(WebDriver driver) {
+        if (driver instanceof TakesScreenshot) {
+            TakesScreenshot screenshotTaker = (TakesScreenshot) driver;
+            File file = screenshotTaker.getScreenshotAs(OutputType.FILE);
+        }
+    }
 
 }
