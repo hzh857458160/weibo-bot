@@ -2,13 +2,12 @@ package com.scu.weibobot.taskexcuter;
 
 import com.scu.weibobot.domain.BotInfo;
 import com.scu.weibobot.domain.WeiboAccount;
-import com.scu.weibobot.utils.TimeUtil;
+import com.scu.weibobot.utils.GenerateInfoUtil;
 import com.scu.weibobot.utils.WebDriverUtil;
 import com.scu.weibobot.utils.WeiboOpUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.WebDriver;
 
-import java.time.LocalDateTime;
 import java.util.Random;
 
 
@@ -34,7 +33,7 @@ public class WeiboBotExecutor implements Runnable {
             return;
         }
         //获取使用度对应的概率
-        double prob = TimeUtil.getProbability(botInfo.getBotLevel());
+        double prob = GenerateInfoUtil.getUseWeiboProb(botInfo.getBotLevel());
         log.info("对应使用度概率为{}", prob);
         //随机数
         double nowProb = new Random().nextDouble();
