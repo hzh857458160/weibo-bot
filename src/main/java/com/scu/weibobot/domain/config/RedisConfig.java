@@ -5,10 +5,12 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
@@ -16,8 +18,9 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfig extends CachingConfigurerSupport{
 
     @SuppressWarnings("all")
+    @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
-        RedisTemplate<String, Object> template = new RedisTemplate<String, Object>();
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(factory);
         Jackson2JsonRedisSerializer jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer(Object.class);
         ObjectMapper om = new ObjectMapper();
@@ -30,9 +33,9 @@ public class RedisConfig extends CachingConfigurerSupport{
         // hash的key也采用String的序列化方式
         template.setHashKeySerializer(stringRedisSerializer);
         // value序列化方式采用jackson
-        template.setValueSerializer(jackson2JsonRedisSerializer);
+        template.setValueSerializer(new JdkSerializationRedisSerializer());
         // hash的value序列化方式采用jackson
-        template.setHashValueSerializer(jackson2JsonRedisSerializer);
+        template.setHashValueSerializer(new JdkSerializationRedisSerializer());
         template.afterPropertiesSet();
         return template;
     }

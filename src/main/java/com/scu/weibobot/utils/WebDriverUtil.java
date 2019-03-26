@@ -1,16 +1,59 @@
 package com.scu.weibobot.utils;
 
+import com.scu.weibobot.service.RedisService;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.util.List;
 import java.util.Set;
 
 @Slf4j
+@Component
 public class WebDriverUtil {
 
-    private WebDriverUtil(){}
+    public WebDriverUtil(){}
+
+    @Autowired
+    private RedisService redisService;
+
+    public static WebDriverUtil webDriverUtil;
+
+
+    @PostConstruct
+    public void init() {
+        webDriverUtil = this;
+        webDriverUtil.redisService = this.redisService;
+    }
+
+    public static boolean isCookieExist(String key){
+        return webDriverUtil.redisService.hasKey(key);
+    }
+
+    public static void saveCurrentCookies(WebDriver driver, String key, long time){
+        //将cookie缓存到redis中
+        Set<Cookie> cookieSet = getCookies(driver);
+        webDriverUtil.redisService.sSetAndTime(key, time, cookieSet.toArray());
+    }
+
+    public static boolean getUrlWithCookie(WebDriver driver, String url, String key){
+        if (isCookieExist(key)){
+            Set<Object> cookieSet = webDriverUtil.redisService.sGet(key);
+            driver.get(url);
+            for (Object obj : cookieSet){
+                WebDriverUtil.addCookie(driver, (Cookie) obj);
+            }
+            driver.navigate().refresh();
+            waitSeconds(3);
+            return true;
+        }
+
+        return false;
+
+    }
 
     /**
      * 睡眠对应秒数
@@ -49,6 +92,37 @@ public class WebDriverUtil {
             }
         }
         return null;
+    }
+
+
+
+
+    public static WebElement forceGetElement(By selector, WebDriver driver){
+        for (int i = 0; i < 4; i++){
+            try {
+                return driver.findElement(selector);
+            } catch (NoSuchElementException e){
+                waitSeconds(2);
+                log.info("尝试重新获取该元素", selector.toString());
+            }
+        }
+        log.error("获取当前元素失败By:{}，请检查当前url：{}", selector.toString(), driver.getCurrentUrl());
+        throw new NullPointerException("获取元素失败");
+
+    }
+
+
+    public static List<WebElement> forceGetElementList(By selector, WebDriver driver){
+        for (int i = 0; i < 4; i++){
+            try {
+                return driver.findElements(selector);
+            } catch (NoSuchElementException e){
+                waitSeconds(2);
+                log.info("尝试重新获取该元素", selector.toString());
+            }
+        }
+        log.error("获取当前元素失败By:{}，请检查当前url：{}", selector.toString(), driver.getCurrentUrl());
+        throw new NullPointerException("获取元素失败");
     }
 
     /**

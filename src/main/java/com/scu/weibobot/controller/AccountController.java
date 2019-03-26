@@ -7,6 +7,7 @@ import com.scu.weibobot.service.BotInfoService;
 import com.scu.weibobot.service.WeiboAccountService;
 import com.scu.weibobot.taskexcuter.WebDriverPool;
 import com.scu.weibobot.utils.GenerateInfoUtil;
+import com.scu.weibobot.utils.WebDriverUtil;
 import com.scu.weibobot.utils.WeiboOpUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.WebDriver;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,22 +33,26 @@ public class AccountController {
     private BotInfoService botInfoService;
 
     @PostMapping("/account")
-    public void addNewBotAccount(HttpServletRequest request, HttpServletResponse response) throws InterruptedException {
+    public void addNewBotAccount(HttpServletRequest request, HttpServletResponse response) throws IOException {
         WebDriver driver = null;
+        response.setContentType("application/json;charset=UTF-8");
+        String result = "";
         try {
             response.setHeader("Access-Control-Allow-Origin", "*");
             //接收post提交的账号与密码
             String username = request.getParameter("username");
             String password = request.getParameter("password");
-
-            int locationNum = GenerateInfoUtil.generateLocation();
-            driver = WebDriverPool.getWebDriver(Consts.PROVINCE[locationNum]);
+            int locationNum = 0;
+            while(driver == null) {
+                locationNum = GenerateInfoUtil.generateLocation();
+                driver = WebDriverPool.getWebDriver(Consts.PROVINCE[locationNum]);
+            }
             //验证账号是否能够登陆微博
             if (!WeiboOpUtil.loginWeibo(driver, username, password)){
-                log.info("账号密码有误，请确认后重试");
+                log.warn("账号密码有误，请确认后重试");
+                result = "{\"code\":\"10\",\"msg\":\"账号密码有误，请确认后重试\"}";
                 return;
             }
-
             WeiboAccount account = new WeiboAccount(0L, username, password);
             //先登录账号修改资料(需要返回地址)
             String nickName = GenerateInfoUtil.generateNickName();
@@ -58,10 +65,7 @@ public class AccountController {
             WeiboOpUtil.setBirthDate(driver, birthDate);
             String location = WeiboOpUtil.setLocation(driver, locationNum);
             WeiboOpUtil.saveUserSetting(driver);
-            log.info("nickName:{}, gender:{}, birthDate:{}, location:{}", nickName, gender, birthDate, location);
-
-            List<String> list = new ArrayList<>(Arrays.asList(interests.split("#")));
-            WeiboOpUtil.subscribeWeiboByInterest(driver, list);
+            log.info("nickName:{}, gender:{}, birthDate:{}, location:{} interests:{}", nickName, gender, birthDate, location, interests);
 
             //存入账号数据库
             accountService.addWeiboAccount(account);
@@ -78,10 +82,22 @@ public class AccountController {
             //再将资料存入数据库
             botInfoService.addBotInfo(botInfo);
 
+            List<String> list = new ArrayList<>(Arrays.asList(interests.split("#")));
+            WeiboOpUtil.subscribeWeiboByInterest(driver, list);
+            result = "{\"code\":\"0\",\"msg\":\"成功添加账号\"}";
+
+        } catch (Exception e){
+            e.printStackTrace();
+            result = "{\"code\":\"11\",\"msg\":\"" + e.getMessage() +"\"}";
+            log.info("暂停30s");
+            WebDriverUtil.waitSeconds(30);
+
         } finally {
-            if (driver != null){
-                WebDriverPool.closeCurrentWebDriver(driver);
-            }
+            WebDriverPool.closeCurrentWebDriver(driver);
+            PrintWriter out = response.getWriter();
+            out.print(result);
+            out.flush();
+            out.close();
         }
 
 

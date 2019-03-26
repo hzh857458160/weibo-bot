@@ -32,7 +32,7 @@ public class Consts {
 //            "com.alibaba.android.rimet/10487439 Channel/227200 language/zh-CN'";
 
     //每到整点会运行
-    public static final String RUN_PER_HOUR_CRON = " 0 30 * * *  ?";
+    public static final String RUN_PER_HOUR_CRON = " 0 31 * * *  ?";
     //每天的0点会运行
     public static final String RUN_PER_DAY_CRON = "0 36 16 * * ?";
 

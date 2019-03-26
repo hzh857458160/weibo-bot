@@ -23,7 +23,7 @@ public class RedisController {
         String password = "WEIBOhzh.0123";
         WeiboOpUtil.loginWeibo(driver, username, password);
         Set<Cookie> cookieSet = driver.manage().getCookies();
-        driver.quit();
+        WebDriverPool.closeCurrentWebDriver(driver);
 
         System.out.println(redisService.sSetAndTime("test", 120, cookieSet.toArray()));
 

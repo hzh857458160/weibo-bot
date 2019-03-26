@@ -22,7 +22,7 @@ public class GenerateInfoUtil {
 
 
     //生成昵称
-    public static String generateNickName() throws InterruptedException {
+    public static String generateNickName() {
         if (nickName == null){
             getNicknameAndImgSrc();
         }
@@ -31,6 +31,12 @@ public class GenerateInfoUtil {
         return name;
 
     }
+    public static String reAddSuffixToNickName(String tempName){
+        if ("".equals(tempName) || tempName == null){
+            throw new RuntimeException("当前处于reAddSuffixToNickName(String tempName), 参数错误:" + tempName);
+        }
+        return addSuffixToNickName(tempName.substring(0, nickName.length() - 1));
+    }
 
     //生成昵称后缀
     public static String addSuffixToNickName(String tempName){
@@ -38,9 +44,6 @@ public class GenerateInfoUtil {
         return tempName + Consts.NICKNAME_SUFFIX[ran];
     }
 
-    public static String delSuffix(String tempName){
-        return tempName.substring(0, nickName.length() - 1);
-    }
 
     /**
      * 生成性别 男0女1
@@ -180,7 +183,7 @@ public class GenerateInfoUtil {
      * 来生成相应的昵称与头像地址
      * @return
      */
-    private static void getNicknameAndImgSrc() throws InterruptedException {
+    private static void getNicknameAndImgSrc() {
         String url = "https://music.163.com/";
         WebDriver driver = null;
 
@@ -213,7 +216,6 @@ public class GenerateInfoUtil {
             if (pageList != null){
                 int ran2 = random.nextInt(pageList.size());
                 ((JavascriptExecutor) driver).executeScript("arguments[0].click();", pageList.get(ran2));
-//            pageList.get(ran2).click();
                 log.info("选择歌单第{}页评论", ran2);
                 waitSeconds(2);
             } else {
@@ -237,9 +239,7 @@ public class GenerateInfoUtil {
             nickName = specNickname.getText();
             log.info("imgSrc:{}, nickName:{}", imgSrc, nickName);
         } finally {
-            if (driver != null){
-                WebDriverPool.closeCurrentWebDriver(driver);
-            }
+            WebDriverPool.closeCurrentWebDriver(driver);
         }
 
     }

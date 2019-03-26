@@ -50,34 +50,34 @@ public class ScheduleService {
 
     }
 
-    @Scheduled(cron = Consts.RUN_PER_DAY_CRON)
-    public void searchForProxy(){
-        log.info("进入定时任务searchForProxy() {}", LocalTime.now());
-        WebDriver driver = null;
-        try {
-            driver = WebDriverPool.getWebDriver();
-            List<String> locationList = botInfoService.findAllBotLocations();
-            log.info("查找到所有机器人的地址 list size = {}", locationList.size());
-            ProxyUtil.initProxyLocation(locationList);
-            List<ProxyIp> proxyIpList = new ArrayList<>(300);
-            proxyIpList.addAll(ProxyUtil.crawlFrom89IP(driver));
-            proxyIpList.addAll(ProxyUtil.crawlFromKUAIDAILI(driver));
-            proxyIpList.addAll(ProxyUtil.crawlFromQIYUN(driver));
-            proxyIpList.addAll(ProxyUtil.crawlFromZDAYE(driver));
-            proxyIpService.addAllProxyIp(proxyIpList);
-
-        } finally {
-            if (driver != null){
-                WebDriverPool.closeCurrentWebDriver(driver);
-            }
-        }
-    }
-
-    @Scheduled(cron = Consts.RUN_PER_DAY_CRON)
-    public void cleanUselessProxy(){
-        log.info("进入定时任务cleanUselessProxy() {}", LocalTime.now());
-        proxyIpService.deleteAllUselessProxy();
-    }
+//    @Scheduled(cron = Consts.RUN_PER_DAY_CRON)
+//    public void searchForProxy(){
+//        log.info("进入定时任务searchForProxy() {}", LocalTime.now());
+//        WebDriver driver = null;
+//        try {
+//            driver = WebDriverPool.getWebDriver();
+//            List<String> locationList = botInfoService.findAllBotLocations();
+//            log.info("查找到所有机器人的地址 list size = {}", locationList.size());
+//            ProxyUtil.initProxyLocation(locationList);
+//            List<ProxyIp> proxyIpList = new ArrayList<>(300);
+//            proxyIpList.addAll(ProxyUtil.crawlFrom89IP(driver));
+//            proxyIpList.addAll(ProxyUtil.crawlFromKUAIDAILI(driver));
+//            proxyIpList.addAll(ProxyUtil.crawlFromQIYUN(driver));
+//            proxyIpList.addAll(ProxyUtil.crawlFromZDAYE(driver));
+//            proxyIpService.addAllProxyIp(proxyIpList);
+//
+//        } finally {
+//            if (driver != null){
+//                WebDriverPool.closeCurrentWebDriver(driver);
+//            }
+//        }
+//    }
+//
+//    @Scheduled(cron = Consts.RUN_PER_DAY_CRON)
+//    public void cleanUselessProxy(){
+//        log.info("进入定时任务cleanUselessProxy() {}", LocalTime.now());
+//        proxyIpService.deleteAllUselessProxy();
+//    }
 
 
 

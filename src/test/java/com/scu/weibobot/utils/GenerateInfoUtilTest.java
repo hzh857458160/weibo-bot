@@ -4,22 +4,22 @@ import org.junit.Test;
 
 import javax.validation.constraints.AssertTrue;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
+
 import static org.junit.Assert.*;
 
 public class GenerateInfoUtilTest {
 
     @Test
-    public void generateBotInfo() throws InterruptedException {
-        System.out.println(GenerateInfoUtil.generateNickName());
-//        System.out.println(GenerateInfoUtil.generateImgSrc());
+    public void generateBotInfo() {
+        try {
+            System.out.println(GenerateInfoUtil.generateImgSrc());
+        } catch (InterruptedException e) {
 
-//        System.out.println(GenerateInfoUtil.generateLocation());
-//        System.out.println(GenerateInfoUtil.generateInterests());
-//        System.out.println(GenerateInfoUtil.generateBirthDate());
-//        System.out.println(GenerateInfoUtil.generateBotLevel());
-//        System.out.println(GenerateInfoUtil.generateGender());
-
-
+        }
     }
 
 
