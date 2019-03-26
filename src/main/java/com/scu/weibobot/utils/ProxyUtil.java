@@ -23,8 +23,9 @@ public class ProxyUtil {
 //    private static final String IP89_PROXY_URL = "http://www.89ip.cn/tqdl.html?num=30&address=ADDRESS_REPLACE&kill_address=&port=&kill_port=&isp=";
 //    private static final String KUAIDAILI_PROXY_URL = "https://www.kuaidaili.com/free/inha/PAGE_REPLACE";
     private static final String GET_KUAIDAILI_PROXY_URL = "http://dps.kdlapi.com/api/getdps/?orderid=915341030956045&num=NUM_REPLACE&area=AREA_REPLACE&pt=1&ut=1&f_loc=1&sep=%23";
-
     private static final String NO_SUCH_PROXY_TIPS = "没有找到符合条件的代理，请稍候再试。";
+
+    private static String CURRENT_IP = "222.212.253.125";
 //
 //    private static List<String> LOCATION_LIST = null;
 //    private static List<String> PROVINCE_LIST = null;
@@ -37,7 +38,12 @@ public class ProxyUtil {
 //        }
 //    }
 
-    public static void setLocalIpToWhiteListInKUAIDAILI(){
+
+    /**
+     * 因为学校拨号登陆使用了DHCP，所以每次拨号外网ip都不同
+     * 需要把当前ip添加至快代理的白名单
+     */
+    private static void setLocalIpToWhiteListInKUAIDAILI(){
         String url = "https://www.kuaidaili.com/";
         WebDriver driver = null;
         try{
@@ -97,6 +103,9 @@ public class ProxyUtil {
 
 
     public static List<ProxyIp> getProxyFromKUAIDAILI(int num, String ... locations){
+        if (!CURRENT_IP.equals(getLocalIp())){
+            setLocalIpToWhiteListInKUAIDAILI();
+        }
         if (num < 1 || locations == null){
             return null;
         }
@@ -170,7 +179,23 @@ public class ProxyUtil {
 
     }
 
+    private static String getLocalIp(){
+        InetAddress ia;
+        try {
+            ia = InetAddress.getLocalHost();
 
+            String localName = ia.getHostName();
+            String localIp = ia.getHostAddress();
+            System.out.println("本机名称是:" + localName);
+            System.out.println("本机的ip是:" + localIp);
+            return localIp;
+
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+
+        throw new RuntimeException("获取本机ip失败");
+    }
 
 
 //    public static List<ProxyIp> crawlFromKUAIDAILI(WebDriver driver){
