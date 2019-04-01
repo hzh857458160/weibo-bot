@@ -1,0 +1,326 @@
+<!doctype html>
+<!--[if lt IE 7]>
+<html class="no-js lt-ie9 lt-ie8 lt-ie7" lang=""> <![endif]-->
+<!--[if IE 7]>
+<html class="no-js lt-ie9 lt-ie8" lang=""> <![endif]-->
+<!--[if IE 8]>
+<html class="no-js lt-ie9" lang=""> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js" lang="en" xmlns:th="http://www.thymeleaf.org"> <!--<![endif]-->
+
+<head>
+    <meta charset="utf-8">
+    <title>社交机器人</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+    <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.min.js"
+            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+            crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="../static/css/slick.css" th:href="@{/static/css/slick.css}">
+    <link rel="stylesheet" href="../static/css/slick-theme.css" th:href="@{/static/css/slick-theme.css}">
+    <link rel="stylesheet" href="../static/css/animate.css" th:href="@{/static/css/animate.css}">
+    <link rel="stylesheet" href="http://at.alicdn.com/t/font_8d5l8fzk5b87iudi.css">
+    <link rel="stylesheet" href="http://www.jq22.com/jquery/font-awesome.4.6.0.css">
+    <!-- <link rel="stylesheet" href="assets/css/bootstrap.css"> -->
+    <link rel="stylesheet" href="../static/css/magnific-popup.css" th:href="@{/static/css/magnific-popup.css}">
+    <link rel="stylesheet" href="../static/css/bootsnav.css" th:href="@{/static/css/bootsnav.css}">
+    <!--Theme custom css -->
+    <link rel="stylesheet" href="../static/css/style.css" th:href="@{/static/css/style.css}">
+    <!--Theme Responsive css-->
+    <link rel="stylesheet" href="../static/css/responsive.css" th:href="@{/static/css/responsive.css}"/>
+    <link rel="stylesheet" type="text/css" href="../static/css/normalize.css" th:href="@{/static/css/normalize.css}"/>
+    <link rel="stylesheet" type="text/css" href="../static/fonts/font-awesome-4.2.0/css/font-awesome.min.css"
+          th:href="@{/static/fonts/font-awesome-4.2.0/css/font-awesome.min.css}"/>
+    <link rel="stylesheet" type="text/css" href="../static/css/demo.css" th:href="@{/static/css/demo.css}"/>
+    <link rel="stylesheet" type="text/css" href="../static/css/component.css" th:href="@{/static/css/component.css}"/>
+</head>
+
+<body data-spy="scroll" data-target=".navbar-collapse">
+<!-- Preloader -->
+<div id="loading">
+    <div id="loading-center">
+        <div id="loading-center-absolute">
+            <div class="object" id="object_one"></div>
+            <div class="object" id="object_two"></div>
+            <div class="object" id="object_three"></div>
+            <div class="object" id="object_four"></div>
+        </div>
+    </div>
+</div><!--End off Preloader -->
+
+<div class="culmn">
+    <!--Home page style-->
+    <nav class="navbar navbar-default navbar-fixed white no-background bootsnav">
+        <!-- End Top Search -->
+        <div class="container">
+            <!-- Start Header Navigation -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-menu">
+                    <i class="fa fa-bars"></i>
+                </button>
+                <a class="navbar-brand" href="#home">
+                    <img src="../static/img/logo.png" th:src="@{/static/img/logo.png}"
+                         class="logo logo-display m-top-10" alt="">
+                    <img src="../static/img/logo.jpg" th:src="@{/static/img/logo.jpg}" class="logo logo-scrolled"
+                         alt="">
+
+                </a>
+            </div>
+            <!-- End Header Navigation -->
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="navbar-menu">
+                <ul class="nav navbar-nav navbar-right" data-in="fadeInDown" data-out="fadeOutUp">
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#addBot">AddBot</a></li>
+                    <li><a href="#observer">Observer</a></li>
+                    <li><a href="#about">About</a></li>
+                </ul>
+            </div><!-- /.navbar-collapse -->
+        </div>
+
+
+        <!-- Start Side Menu -->
+        <div class="side">
+            <a href="#" class="close-side"><i class="fa fa-times"></i></a>
+            <div class="widget">
+                <h6 class="title">Custom Pages</h6>
+                <ul class="link">
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#">AddBot</a></li>
+                    <li><a href="#">Observer</a></li>
+                    <li><a href="#">About</a></li>
+                </ul>
+            </div>
+        </div>
+        <!-- End Side Menu -->
+
+    </nav>
+
+
+    <!--Home Sections-->
+
+    <section id="home" class="home bg-mega">
+        <div class="overlay"></div>
+        <div class="container">
+            <div class="row">
+                <div class="main_home">
+                    <div class="home_text">
+                        <h1 class="text-white">Weibo Bot <br/> 社交机器人主页</h1>
+                    </div>
+
+                    <div class="home_btns m-top-120">
+                        <!--<a href="#addBot" class="btn btn-primary m-top-20">ADD WEIBO-BOT</a>-->
+                        <!--<a href="#observer" class="btn btn-default m-top-20">OBSERVE NOW</a>-->
+                    </div>
+
+                </div>
+            </div><!--End off row-->
+        </div><!--End off container -->
+    </section> <!--End off Home Sections-->
+
+    <section id="addBot" class="content">
+        <div class="container">
+            <h3>添加新机器人</h3>
+            <span class="input input--hoshi">
+                    <input class="input__field input__field--hoshi" type="text" id="input-4"/>
+                    <label class="input__label input__label--hoshi input__label--hoshi-color-1" for="input-4">
+                        <span class="input__label-content input__label-content--hoshi">用户名</span>
+                    </label>
+                </span>
+            <span class="input input--hoshi">
+                    <input class="input__field input__field--hoshi" type="password" id="input-5"/>
+                    <label class="input__label input__label--hoshi input__label--hoshi-color-2" for="input-5">
+                        <span class="input__label-content input__label-content--hoshi">密码</span>
+                    </label>
+                </span>
+
+            <div class="m-top-80">
+                <button type="button" class="btn btn-primary" onclick="postAccount()">确认添加</button>
+            </div>
+            <div class="m-top-80">
+                <div class="alert alert-success alert-dismissible" style="display: none" role="alert">添加账号成功！</div>
+                <div class="alert alert-danger alert-dismissible" style="display: none" role="alert">添加账号失败，请稍后重试</div>
+                <div class="alert alert-warning alert-dismissible" style="display: none" role="alert"></div>
+            </div>
+            <br><br>
+        </div>
+    </section>
+
+
+    <!--observer Section-->
+    <section id="observer" class="content m-top-40">
+        <div class="container">
+            <h3>当前社交机器人运行状况</h3>
+            <div class="panel panel-default  m-top-100">
+                <div class="panel-body" style="white-space: pre">
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- scroll up-->
+    <div class="scrollup">
+        <a href="#"><i class="fa fa-chevron-up"></i></a>
+    </div><!-- End off scroll up -->
+
+
+    <footer id="footer" class="footer bg-black m-top-120">
+        <div class="container">
+            <div class="row">
+                <div class="main_footer text-center p-top-40 p-bottom-30">
+                    <p class="wow fadeInRight" data-wow-duration="1s">
+                        Weibo Bot - Created in 2019. All Rights Reserved
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<!-- JS includes -->
+
+<script src="http://www.jq22.com/jquery/jquery-1.10.2.js"></script>
+
+<script src="../static/js/jquery.magnific-popup.js" th:href="@{/static/js/jquery.magnific-popup.js}"></script>
+<script src="../static/js/jquery.easing.1.3.js" th:href="@{/static/js/jquery.easing.1.3.js}"></script>
+<script src="../static/js/slick.min.js" th:href="@{/static/js/slick.min.js}"></script>
+<script src="../static/js/jquery.collapse.js" th:href="@{/static/js/jquery.collapse.js}"></script>
+<script src="../static/js/bootsnav.js" th:href="@{/static/js/bootsnav.js}"></script>
+<script src="../static/js/classie.js" th:href="@{/static/js/classie.js}"></script>
+<script src="../static/js/plugins.js" th:href="@{/static/js/plugins.js}"></script>
+<script src="../static/js/main.js" th:href="@{/static/js/main.js}"></script>
+<script>
+    (function () {
+        // trim polyfill : https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/Trim
+        if (!String.prototype.trim) {
+            (function () {
+                // Make sure we trim BOM and NBSP
+                var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g;
+                String.prototype.trim = function () {
+                    return this.replace(rtrim, '');
+                };
+            })();
+        }
+
+        [].slice.call(document.querySelectorAll('input.input__field')).forEach(function (inputEl) {
+            // in case the input is already filled
+            if (inputEl.value.trim() !== '') {
+                classie.add(inputEl.parentNode, 'input--filled');
+            }
+
+            // events:
+            inputEl.addEventListener('focus', onInputFocus);
+            inputEl.addEventListener('blur', onInputBlur);
+        });
+
+        function onInputFocus(ev) {
+            classie.add(ev.target.parentNode, 'input--filled');
+        }
+
+        function onInputBlur(ev) {
+            if (ev.target.value.trim() === '') {
+                classie.remove(ev.target.parentNode, 'input--filled');
+            }
+        }
+    })();
+
+    /*
+     *webSocket链接
+     */
+    var socket;
+    if (typeof (WebSocket) == "undefined") {
+        console.log("您的浏览器不支持WebSocket");
+    } else {
+        console.log("您的浏览器支持WebSocket");
+        socket = new WebSocket("ws://localhost:8080/websocket");
+
+        //打开事件
+        socket.onopen = function () {
+            console.log("Socket 已打开");
+        };
+
+        //获得消息事件
+        socket.onmessage = function (msg) {
+            // console.log(msg.data);
+            //发现消息进入
+            var q = $(".panel-body");
+            q.text(msg.data + "\n" + q.text());
+        };
+    }
+
+    function postAccount() {
+        var warning = $(".alert-warning");
+        if (!inputCheck()) {
+            warning.text("(用户名或密码不能为空！)");
+            warning.css('display', '');
+            return;
+        }
+        $(".btn.btn-primary").attr("disabled", true);
+        warning.text("(正在添加账号，请稍等...)");
+        warning.css('display', '');
+        var flag = false;
+        try {
+            $.post(
+                "/account",
+                {
+                    username: $("#input-4").val(),
+                    password: $("#input-5").val()
+                },
+                function (data) {
+                    var data1 = jQuery.parseJSON(data);
+                    console.log(data1);
+                    console.log('成功收到数据: ' + JSON.stringify(data, null, '  '));
+                    var result = data;
+                    if (result.code === "0") {
+                        flag = true;
+                        $("#input-4").val("");
+                        $("#input-5").val("")
+                    }
+                },
+                "json"
+            );
+        } finally {
+            setTimeout(function () {
+                warning.css('display', 'none');
+                $(".alert-warning").text("");
+                $(".btn.btn-primary").attr("disabled", false);
+                if (flag) {
+                    showAlert($(".alert.alert-success"));
+                } else {
+                    showAlert($(".alert.alert-danger"));
+                }
+            }, 2000);
+
+        }
+
+
+    }
+
+    function showAlert(alert) {
+        alert.css('display', '');
+        setTimeout(function () {
+            alert.css('display', 'none');
+        }, 5000);
+    }
+
+    function inputCheck() {
+        var username = $("#input-4").val();
+        var password = $("#input-5").val();
+        if (username === "" || password === "") {
+            return false;
+        }
+        return true;
+    }
+</script>
+
+</body>
+</html>

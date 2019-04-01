@@ -1,19 +1,18 @@
 package com.scu.weibobot.controller;
 
 import com.scu.weibobot.domain.BotInfo;
-import com.scu.weibobot.domain.consts.Consts;
 import com.scu.weibobot.domain.WeiboAccount;
+import com.scu.weibobot.domain.consts.Consts;
 import com.scu.weibobot.service.BotInfoService;
 import com.scu.weibobot.service.WeiboAccountService;
 import com.scu.weibobot.taskexcuter.WebDriverPool;
 import com.scu.weibobot.utils.GenerateInfoUtil;
-import com.scu.weibobot.utils.WebDriverUtil;
 import com.scu.weibobot.utils.WeiboOpUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.WebDriver;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -25,7 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
-@Controller
+@RestController
 public class AccountController {
     @Autowired
     private WeiboAccountService accountService;
@@ -46,6 +45,7 @@ public class AccountController {
             while(driver == null) {
                 locationNum = GenerateInfoUtil.generateLocation();
                 driver = WebDriverPool.getWebDriver(Consts.PROVINCE[locationNum]);
+                Thread.sleep(1000);
             }
             //验证账号是否能够登陆微博
             if (!WeiboOpUtil.loginWeibo(driver, username, password)){
@@ -89,11 +89,9 @@ public class AccountController {
         } catch (Exception e){
             e.printStackTrace();
             result = "{\"code\":\"11\",\"msg\":\"" + e.getMessage() +"\"}";
-            log.info("暂停30s");
-            WebDriverUtil.waitSeconds(30);
 
         } finally {
-            WebDriverPool.closeCurrentWebDriver(driver);
+            WebDriverPool.closeWebDriver(driver);
             PrintWriter out = response.getWriter();
             out.print(result);
             out.flush();

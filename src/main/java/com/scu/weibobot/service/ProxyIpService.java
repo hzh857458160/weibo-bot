@@ -1,7 +1,7 @@
 package com.scu.weibobot.service;
 
-import com.scu.weibobot.domain.ProxyIp;
-import com.scu.weibobot.domain.repository.ProxyIpRepository;
+import com.scu.weibobot.domain.pojo.ProxyIp;
+import com.scu.weibobot.service.repository.ProxyIpRepository;
 import com.scu.weibobot.utils.ProxyUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

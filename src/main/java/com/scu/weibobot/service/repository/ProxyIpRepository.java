@@ -1,6 +1,6 @@
-package com.scu.weibobot.domain.repository;
+package com.scu.weibobot.service.repository;
 
-import com.scu.weibobot.domain.ProxyIp;
+import com.scu.weibobot.domain.pojo.ProxyIp;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

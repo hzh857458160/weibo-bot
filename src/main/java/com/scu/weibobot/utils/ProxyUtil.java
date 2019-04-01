@@ -1,6 +1,6 @@
 package com.scu.weibobot.utils;
 
-import com.scu.weibobot.domain.ProxyIp;
+import com.scu.weibobot.domain.pojo.ProxyIp;
 import com.scu.weibobot.taskexcuter.WebDriverPool;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
@@ -12,31 +12,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.scu.weibobot.utils.WebDriverUtil.waitSeconds;
 
 @Slf4j
 public class ProxyUtil {
-//    private static final String ZDAYE_PROXY_URL = "http://ip.zdaye.com/dayProxy.html";
-//    private static final String QIYUN_PROXY_URL = "http://www.qydaili.com/free/?action=china&page=PAGE_REPLACE";
-//    private static final String IP89_PROXY_URL = "http://www.89ip.cn/tqdl.html?num=30&address=ADDRESS_REPLACE&kill_address=&port=&kill_port=&isp=";
-//    private static final String KUAIDAILI_PROXY_URL = "https://www.kuaidaili.com/free/inha/PAGE_REPLACE";
     private static final String GET_KUAIDAILI_PROXY_URL = "http://dps.kdlapi.com/api/getdps/?orderid=915341030956045&num=NUM_REPLACE&area=AREA_REPLACE&pt=1&ut=1&f_loc=1&sep=%23";
-    private static final String NO_SUCH_PROXY_TIPS = "没有找到符合条件的代理，请稍候再试。";
+    private static final String KUAIDAILI_URL = "https://www.kuaidaili.com/";
+    private static final String KUAIDAILI_KEY = "KUAIDAILI";
 
-    private static String CURRENT_IP = "222.212.253.125";
-//
-//    private static List<String> LOCATION_LIST = null;
-//    private static List<String> PROVINCE_LIST = null;
+//    private static final String NO_SUCH_PROXY_TIPS = "没有找到符合条件的代理，请稍候再试。";
 
-//    public static void initProxyLocation(List<String> locationList){
-//        LOCATION_LIST = locationList;
-//        PROVINCE_LIST = new ArrayList<>();
-//        for (String location : locationList){
-//            PROVINCE_LIST.add(getProvinceFromLocation(location));
-//        }
-//    }
+    private static String CURRENT_IP = "220.167.41.229";
 
 
     /**
@@ -44,16 +33,15 @@ public class ProxyUtil {
      * 需要把当前ip添加至快代理的白名单
      */
     private static void setLocalIpToWhiteListInKUAIDAILI(){
-        String url = "https://www.kuaidaili.com/";
         WebDriver driver = null;
         try{
             driver = WebDriverPool.getWebDriver();
-            String key = "KUAIDAILI";
-            if (WebDriverUtil.getUrlWithCookie(driver, url, key)){
+            if (WebDriverUtil.getUrlWithCookie(driver, KUAIDAILI_URL, KUAIDAILI_KEY)) {
+
                 driver.findElement(By.cssSelector("a.qc-btn.link-name.welcome-link")).click();
 
             } else {
-                driver.get(url);
+                driver.get(KUAIDAILI_URL);
                 waitSeconds(3);
 
                 WebDriverUtil.forceGetElement(By.cssSelector("a.qc-btn.link-dl"), driver).click();
@@ -77,35 +65,32 @@ public class ProxyUtil {
             WebDriverUtil.forceGetElement(By.id("ucm_dpsipwhitelist"), driver).click();
             waitSeconds(2);
             String myIp = driver.findElement(By.id("myIP")).getText();
+            CURRENT_IP = myIp;
             WebElement whiteListTextarea = WebDriverUtil.forceGetElement(By.id("iplist"), driver);
             whiteListTextarea.clear();
             whiteListTextarea.click();
             whiteListTextarea.sendKeys(myIp);
             WebDriverUtil.forceGetElement(By.id("postcontent"), driver).click();
-
-            WebDriverUtil.saveCurrentCookies(driver, key, 24 * 60 * 60);
+            WebDriverUtil.saveCurrentCookies(driver, KUAIDAILI_KEY, 24 * 60 * 60);
         } finally {
-            WebDriverPool.closeCurrentWebDriver(driver);
-        }
-    }
-
-    public static ProxyIp getOneProxyWithLocation(String location){
-        List<ProxyIp> ipList = getProxyFromKUAIDAILI(1, location);
-        if (ipList != null){
-            while(ipList.size() == 0){
-                ipList = getProxyFromKUAIDAILI(1, location);
+            if (driver != null) {
+                driver.quit();
             }
-            return ipList.get(0) ;
         }
+    }
 
-        return null;
+    public static synchronized ProxyIp getOneProxyWithLocation(String location) {
+        List<ProxyIp> ipList = getProxyFromKUAIDAILI(1, location);
+        return ipList == null ? null : ipList.get(0);
     }
 
 
-    public static List<ProxyIp> getProxyFromKUAIDAILI(int num, String ... locations){
-        if (!CURRENT_IP.equals(getLocalIp())){
-            setLocalIpToWhiteListInKUAIDAILI();
-        }
+    private static List<ProxyIp> getProxyFromKUAIDAILI(int num, String... locations) {
+
+//        if (!CURRENT_IP.equals(getLocalIp())){
+//            CURRENT_IP = getLocalIp();
+//            setLocalIpToWhiteListInKUAIDAILI();
+//        }
         if (num < 1 || locations == null){
             return null;
         }
@@ -118,14 +103,14 @@ public class ProxyUtil {
         String url = GET_KUAIDAILI_PROXY_URL.replace("NUM_REPLACE", num + "")
                 .replace("AREA_REPLACE", locationSb);
         String result = sendGet(url);
-        log.info("快代理返回内容：{}", result);
-        if (result.contains(NO_SUCH_PROXY_TIPS)){
-            return null;
-        }
+        log.info("KUAI return ：{}", result);
         for (String tempIp : result.split("#")){
             ProxyIp proxyIp = new ProxyIp();
             int index1 = tempIp.indexOf(":");
             int index2 = tempIp.indexOf(",");
+            if (index1 == -1 || index2 == -1) {
+                return null;
+            }
             String ip = tempIp.substring(0, index1);
             String port = tempIp.substring(index1 + 1, index2);
             String location = tempIp.substring(index2 + 1);
@@ -133,8 +118,7 @@ public class ProxyUtil {
             proxyIp.setPort(Integer.parseInt(port));
             proxyIp.setLocation(location);
             proxyIp.setAvailable(true);
-            System.out.println("快代理独享代理:" + proxyIp);
-
+            log.info("KUAI独享代理:" + proxyIp);
             ipList.add(proxyIp);
         }
         return ipList;
@@ -171,7 +155,8 @@ public class ProxyUtil {
                 result += line;
             }
         } catch (Exception e) {
-            System.out.println("发送GET请求出现异常" + e);
+            log.error("发送GET请求出现异常" + e);
+            waitSeconds(2);
             e.printStackTrace();
         }
         return result;
@@ -494,17 +479,6 @@ public class ProxyUtil {
 
     }
 
-
-//    public static boolean locationCheck(String location){
-//        if ("".equals(location)){
-//            return false;
-//        }
-//        if (LOCATION_LIST.contains(location)){
-//            return true;
-//        }
-//        String province = getProvinceFromLocation(location);
-//        return PROVINCE_LIST.contains(province);
-//    }
 
     public static String getProvinceFromLocation(String location){
         //解析出省会

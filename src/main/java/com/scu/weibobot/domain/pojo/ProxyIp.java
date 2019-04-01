@@ -1,4 +1,4 @@
-package com.scu.weibobot.domain;
+package com.scu.weibobot.domain.pojo;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

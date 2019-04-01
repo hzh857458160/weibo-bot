@@ -1,7 +1,7 @@
 package com.scu.weibobot.service;
 
 import com.scu.weibobot.domain.BotInfo;
-import com.scu.weibobot.domain.repository.BotInfoRepository;
+import com.scu.weibobot.service.repository.BotInfoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

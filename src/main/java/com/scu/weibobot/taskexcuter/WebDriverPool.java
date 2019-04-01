@@ -1,12 +1,11 @@
 package com.scu.weibobot.taskexcuter;
 
 import com.scu.weibobot.domain.BotInfo;
-import com.scu.weibobot.domain.ProxyIp;
+import com.scu.weibobot.domain.pojo.ProxyIp;
 import com.scu.weibobot.service.BotInfoService;
 import com.scu.weibobot.service.ProxyIpService;
 import com.scu.weibobot.utils.ProxyUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -14,22 +13,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Component
 public class WebDriverPool {
     private static final String DRIVER_PROPERTY = "webdriver.chrome.driver";
-//    private static final String CHROME_DRIVER_PATH = "C:\\Users\\HanrAx\\AppData\\Local\\Google\\Chrome\\Application\\chromedriver.exe";
     private static final String CHROME_DRIVER_PATH = "D:\\chrome-test\\Chrome-bin\\chromedriver.exe";
-//    private static ChromeOptions chromeOptions;
+//    private static final String CHROME_DRIVER_PATH = "C:\\Users\\HanrAx\\AppData\\Local\\Google\\Chrome\\Application\\chromedriver.exe";
 
-    private static int CAPACITY = 10;
+    private static int CAPACITY = 3;
     private static AtomicInteger refCount = new AtomicInteger(0);
-//    private static Map<Long, WebDriver> driverMap = new ConcurrentHashMap<>(CAPACITY);
-
+    private static Semaphore botSemaphore = new Semaphore(CAPACITY);
+    private static Semaphore proxySemaphore = new Semaphore(1);
     @Autowired
     private BotInfoService botInfoService;
     @Autowired
@@ -53,14 +53,13 @@ public class WebDriverPool {
 //        chromeOptions.setHeadless(true);
         //浏览器开启即最大化
         chromeOptions.addArguments("--disable-plugins","--disable-images","--start-maximized", "disable-infobars");
-
-
         Map<String, Object> prefs = new HashMap<>();
         prefs.put("profile.default_content_settings.popups", 0);
         prefs.put("profile.default_content_setting_values.notifications", 2); //禁用浏览器弹窗
         prefs.put("profile.managed_default_content_settings.images", 2); //禁止下载加载图片
         // 禁止加载js
         prefs.put("profile.default_content_settings.javascript", 2); // 2就是代表禁止加载的意思
+        prefs.put("excludeSwitches", Collections.singletonList("enable-automation"));
         chromeOptions.setExperimentalOption("prefs", prefs);
         return chromeOptions;
     }
@@ -73,60 +72,34 @@ public class WebDriverPool {
      * @return
      */
     public static WebDriver getWebDriver(String province) {
-        log.info("进入getWebDriver({})", province);
-        ProxyIp proxyIp = ProxyUtil.getOneProxyWithLocation(province);
-        log.info("获取到ProxyIp:{}", proxyIp);
-        if (proxyIp == null){
-            return null;
-        }
-        StringBuffer proxySb = new StringBuffer("--proxy-server=http://");
-        proxySb.append(proxyIp.getIp()).append(":").append(proxyIp.getPort());
-        log.info("代理设置: {}", proxySb.toString());
         ChromeOptions options = getInitChromeOptions();
-        options.addArguments(proxySb.toString());
+        try {
+            log.info("尝试获取信号量");
+            botSemaphore.acquire();
+            log.info("获取信号量成功");
+            log.info("进入getWebDriver({})", province);
+            if (province != null) {
+                proxySemaphore.acquire();
+                //TODO：当不存在当前区域的代理时的处理
+                ProxyIp proxyIp = ProxyUtil.getOneProxyWithLocation(province);
+                proxySemaphore.release();
+                if (proxyIp == null) {
+                    botSemaphore.release();
+                    return null;
+                }
+                log.info("获取到{}的代理为：{}", province, proxyIp.getLocation());
+                options.addArguments("--proxy-server=http://" + proxyIp.getIp() + ":" + proxyIp.getPort());
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         refCount.incrementAndGet();
+        log.info("Alive driver count is {}", refCount.get());
         return new ChromeDriver(options);
     }
-//        log.info("进入getWebDriver({})", location);
-//        WebDriver driver = null;
-//        try {
-//            driver = getWebDriver();
-//            List<ProxyIp> proxyIpList = ProxyUtil.crawlFrom89IP(driver, location);
-//            log.info("获取到proxyIpList，size = {}", proxyIpList.size());
-//            initChromeOptions();
-//            if (proxyIpList.size() != 0){
-//                for (ProxyIp proxyIp : proxyIpList){
-//                    log.info("当前proxyIp为[{}]", proxyIp);
-//                    if (ProxyUtil.isValid(proxyIp)){
-//                        log.info("id为{}的代理可用", proxyIp.getId());
-//                        String ip = proxyIp.getIp() + ":" + proxyIp.getPort();
-//                        chromeOptions.addArguments("--proxy-server=http://" + ip);
-//                        break;
-//
-//                    } else {
-//                        log.info("id为{}的代理不可用", proxyIp.getId());
-//                        webDriverPool.proxyIpService.setInvalidProxy(proxyIp.getId());
-//                    }
-//                }
-//            }
-//            refCount.incrementAndGet();
-//            return new ChromeDriver(chromeOptions);
-//
-//        } finally {
-//            if (driver != null){
-//                WebDriverPool.closeCurrentWebDriver(driver);
-//            }
-//        }
-//    }
 
-    private static Proxy getProxy(ProxyIp proxyIp){
-        Proxy proxy = new Proxy();
-        String ip = proxyIp.getIp() + ":" + proxyIp.getPort();
-        proxy.setHttpProxy(ip).setFtpProxy(ip).setSslProxy(ip);
-        proxy.setSocksUsername("hzh00112");
-        proxy.setSocksPassword("s5v5emu7");
-        return proxy;
-    }
+
 
     /**
      * 微博账号专用有代理的driver
@@ -137,36 +110,6 @@ public class WebDriverPool {
     public static WebDriver getWebDriver(BotInfo botInfo){
        String province = ProxyUtil.getProvinceFromLocation(botInfo.getLocation());
        return getWebDriver(province);
-//        log.info("进入getWebDriver({})", botInfo);
-//        long botId = botInfo.getBotId();
-//        String location = botInfo.getLocation();
-//        log.info("获取到botId为{}, location为{}", botId, location);
-//        if(driverMap.containsKey(botId)){
-//            log.info("map中有对应的driver");
-//            refCount.incrementAndGet();
-//            return driverMap.get(botId);
-//        }
-//        List<ProxyIp> proxyIpList = webDriverPool.proxyIpService.findAllByLocation(location);
-//        log.info("获取到proxyIpList，size = {}", proxyIpList.size());
-//        initChromeOptions();
-//        for (ProxyIp proxyIp : proxyIpList){
-//            log.info("当前proxyIp为[{}]", proxyIp);
-//            if (ProxyUtil.isValid(proxyIp)){
-//                log.info("id为{}的代理可用", proxyIp.getId());
-//                String ip = proxyIp.getIp() + ":" + proxyIp.getPort();
-//                chromeOptions.addArguments("--proxy-server=http://" + ip);
-//                break;
-//
-//            } else {
-//                log.info("id为{}的代理不可用", proxyIp.getId());
-//                webDriverPool.proxyIpService.setInvalidProxy(proxyIp.getId());
-//            }
-//        }
-//        WebDriver driver =  new ChromeDriver(chromeOptions);
-//        refCount.incrementAndGet();
-//        driverMap.put(botId, driver);
-//        log.info("当前driverMap的size = {}", driverMap.size());
-//        return driver;
     }
 
     /**
@@ -174,16 +117,14 @@ public class WebDriverPool {
      * @return
      */
     public static WebDriver getWebDriver(){
-        log.info("进入getWebDriver()");
-        refCount.incrementAndGet();
-        log.info("Alive driver count is {}", refCount.get());
         return new ChromeDriver(getInitChromeOptions());
     }
 
 
-
-    public static void closeCurrentWebDriver(WebDriver webDriver) {
+    public static void closeWebDriver(WebDriver webDriver) {
         if (webDriver != null){
+            log.info("释放信号量");
+            botSemaphore.release();
             refCount.decrementAndGet();
             log.info("Alive driver count is {}", refCount.get());
             webDriver.quit();

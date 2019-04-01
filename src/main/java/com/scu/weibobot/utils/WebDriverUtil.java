@@ -41,6 +41,7 @@ public class WebDriverUtil {
 
     public static boolean getUrlWithCookie(WebDriver driver, String url, String key){
         if (isCookieExist(key)){
+            log.info("存在cookies");
             Set<Object> cookieSet = webDriverUtil.redisService.sGet(key);
             driver.get(url);
             for (Object obj : cookieSet){
@@ -48,11 +49,24 @@ public class WebDriverUtil {
             }
             driver.navigate().refresh();
             waitSeconds(3);
+            log.info("替换原有cookie");
+            webDriverUtil.redisService.del(key);
+            saveCurrentCookies(driver, key, 24 * 60 * 60);
             return true;
         }
 
         return false;
 
+    }
+
+    public static void waitUntilElement(WebDriver driver, By by) {
+        while (true) {
+            try {
+                driver.findElement(by);
+            } catch (Exception e) {
+                waitSeconds(2);
+            }
+        }
     }
 
     /**
@@ -94,7 +108,19 @@ public class WebDriverUtil {
         return null;
     }
 
+    public static WebElement forceGetElement(By selector, WebElement element) {
+        for (int i = 0; i < 4; i++) {
+            try {
+                return element.findElement(selector);
+            } catch (NoSuchElementException e) {
+                waitSeconds(2);
+                log.info("尝试重新获取该元素");
+            }
+        }
+        log.error("获取元素失败By:{}，请检查原元素", selector.toString());
+        throw new NullPointerException("获取元素失败");
 
+    }
 
 
     public static WebElement forceGetElement(By selector, WebDriver driver){
@@ -103,10 +129,10 @@ public class WebDriverUtil {
                 return driver.findElement(selector);
             } catch (NoSuchElementException e){
                 waitSeconds(2);
-                log.info("尝试重新获取该元素", selector.toString());
+                log.info("尝试重新获取该元素");
             }
         }
-        log.error("获取当前元素失败By:{}，请检查当前url：{}", selector.toString(), driver.getCurrentUrl());
+        log.error("获取元素失败By:{}，请检查当前url：{}", selector.toString(), driver.getCurrentUrl());
         throw new NullPointerException("获取元素失败");
 
     }
@@ -190,7 +216,7 @@ public class WebDriverUtil {
      * @param driver
      */
     public static void closeCurrentTab(WebDriver driver){
-        driver.close();
+        driver.quit();
     }
 
     /**
@@ -205,7 +231,6 @@ public class WebDriverUtil {
         String js2 = "document.documentElement.scrollTop = document.documentElement.scrollTop + " + num;
         JavascriptExecutor jsExecutor = (JavascriptExecutor) driver;
         if (jsExecutor.executeScript(js1) == null){
-            log.info("第一条语句无效");
             jsExecutor.executeScript(js2);
 
         }

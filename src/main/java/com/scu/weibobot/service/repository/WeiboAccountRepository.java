@@ -1,4 +1,4 @@
-package com.scu.weibobot.domain.repository;
+package com.scu.weibobot.service.repository;
 
 import com.scu.weibobot.domain.WeiboAccount;
 import org.springframework.data.jpa.repository.JpaRepository;

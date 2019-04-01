@@ -13,6 +13,7 @@ import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static com.scu.weibobot.utils.WebDriverUtil.waitSeconds;
 
@@ -53,7 +54,7 @@ public class GenerateInfoUtil {
      * @return
      */
     public static int generateGender(){
-        return random.nextInt(100) < 50 ? 0 : 1;
+        return random.nextInt(100) < Consts.BOY_PROB ? 0 : 1;
     }
 
     /**
@@ -142,19 +143,23 @@ public class GenerateInfoUtil {
      */
     private static int generateBirthYear(){
         int curYear = LocalDate.now().getYear();
-        int ran = random.nextInt(100);
+        int ran = random.nextInt(100) + 1; //1 - 100
         Random tempRan = new Random();
         int year;
-        if (ran < 7){
+
+        if (ran <= Consts.AGE_LESS_THAN_15) {
+            year = curYear - 15 + tempRan.nextInt(3);
+
+        } else if (ran <= Consts.AGE_BETWEEN_15_AND_19) {
             year = curYear - 19 + tempRan.nextInt(5);
 
-        } else if (ran < 47){
+        } else if (ran < Consts.AGE_BETWEEN_20_AND_24) {
             year = curYear - 24 + tempRan.nextInt(5);
 
-        } else if (ran < 67){
+        } else if (ran < Consts.AGE_BETWEEN_25_AND_29) {
             year = curYear - 29 + tempRan.nextInt(5);
 
-        } else if (ran < 94){
+        } else if (ran < Consts.AGE_BETWEEN_30_AND_39) {
             year = curYear - 39 + tempRan.nextInt(10);
 
         } else {
@@ -242,7 +247,9 @@ public class GenerateInfoUtil {
             nickName = specNickname.getText();
             log.info("imgSrc:{}, nickName:{}", imgSrc, nickName);
         } finally {
-            WebDriverPool.closeCurrentWebDriver(driver);
+            if (driver != null) {
+                driver.quit();
+            }
         }
 
     }
@@ -254,37 +261,104 @@ public class GenerateInfoUtil {
      * @return
      */
     public static double getUseWeiboProb(String botLevel) {
-        int index = -1;
-        switch (botLevel) {
-            case "N":
-                index = 2;
-                break;
-            case "H":
-                index = 1;
-                break;
-            case "VH":
-                index = 0;
-                break;
+        if (botLevel == null || "".equals(botLevel)) {
+            log.error("参数传递出错 [botLevel = {}]", botLevel);
+            throw new RuntimeException("参数传递出错[botLevel = " + botLevel + "]");
+        }
+        double botProb = 0.0;
+        for (int i = 0; i < Consts.BOT_LEVEL.length; i++) {
+            String temp = Consts.BOT_LEVEL[i];
+            if (temp.equals(botLevel)) {
+                botProb = Consts.BOT_LEVEL_PROB[i];
+            }
+        }
+        if (botProb == 0.0) {
+            log.error("获取系数出错 [botLevel = {}]", botLevel);
+            throw new RuntimeException("获取系数出错[botLevel = " + botLevel + "]");
         }
         double prob = 0.0;
         int hour = LocalTime.now().getHour();
-        List<Integer> nList = IntStream.of(Consts.NORMAL_CLOCK).boxed().collect(Collectors.toList());
-        List<Integer> hList = IntStream.of(Consts.HIGH_CLOCK).boxed().collect(Collectors.toList());
-        List<Integer> vhList = IntStream.of(Consts.VERY_HIGH_CLOCK).boxed().collect(Collectors.toList());
 
-        if (nList.contains(hour)) {
-            log.info("当前处于轻度时间段", hour);
-            prob = Consts.NORMAL_PROBABILITY[index];
-        } else if (hList.contains(hour)) {
-            log.info("当前处于中度时间段", hour);
-            prob = Consts.HIGH_PROBABILITY[index];
-        } else if (vhList.contains(hour)) {
-            log.info("当前处于重度时间段", hour);
-            prob = Consts.VERY_HIGH_PROBABILITY[index];
+        if (isContained(Consts.LOW_ACTIVE_TIME, hour)) {
+            log.info("当前处于低活跃度时间", hour);
+            prob = botProb * Consts.L_ACTIVE_PROB;
+
+        } else if (isContained(Consts.NORMAL_ACTIVE_TIME, hour)) {
+            log.info("当前处于中活跃度时间", hour);
+            prob = botProb * Consts.N_ACTIVE_PROB;
+
+        } else if (isContained(Consts.HIGH_ACTIVE_TIME, hour)) {
+            log.info("当前处于较高活跃度时间", hour);
+            prob = botProb * Consts.H_ACTIVE_PROB;
+
+        } else if (isContained(Consts.VERY_HIGH_ACTIVE_TIME, hour)) {
+            log.info("当前处于高活跃度时间", hour);
+            prob = botProb * Consts.VH_ACTIVE_PROB;
         } else {
             log.error("hour error");
         }
         return prob;
+    }
+
+    private static boolean isContained(int[] array, int x) {
+        for (int temp : array) {
+            if (temp == x) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static String generatePostContent(String keyWord) {
+        log.info("进入generatePostContent({})", keyWord);
+        StringBuilder contentSb = new StringBuilder();
+        String url = "https://www.toutiao.com/search/?keyword=" + keyWord;
+        WebDriver driver = null;
+        try {
+            driver = WebDriverPool.getWebDriver();
+            log.info("get url：{}", url);
+            driver.get(url);
+            waitSeconds(3);
+
+            List<WebElement> articleList = WebDriverUtil.forceGetElementList(By.cssSelector("a.img-wrap > img:only-child"), driver);
+            log.info("获取到文章列表 size = {}", articleList.size());
+            Random random = new Random();
+            int ra = random.nextInt(articleList.size());
+            log.info("生成随机数为{}", ra);
+            articleList.get(ra).click();
+            waitSeconds(2);
+
+            WebDriverUtil.changeWindow(driver);
+//            List<WebElement> imgList = driver.findElements(By.cssSelector("div.pgc-img > img"));
+            List<WebElement> pList = driver.findElements(By.cssSelector("div.article-content > div > p"));
+
+            log.info("获取到文字列表 size = {}", pList.size());
+            int i = 0;
+            for (WebElement pText : pList) {
+                if (i > 1) {
+                    break;
+                }
+                String text = pText.getText().trim();
+                log.info("第{}段文字：{}", i, text);
+                if ("".equals(text)) {
+                    continue;
+                }
+                contentSb.append(text).append("\n");
+                i++;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+        } finally {
+            if (driver != null) {
+                driver.quit();
+            }
+
+        }
+
+        return contentSb.toString();
     }
 
 

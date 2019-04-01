@@ -1,22 +1,21 @@
 package com.scu.weibobot.service;
 
 import com.scu.weibobot.domain.BotInfo;
-import com.scu.weibobot.domain.ProxyIp;
 import com.scu.weibobot.domain.WeiboAccount;
 import com.scu.weibobot.domain.consts.Consts;
-import com.scu.weibobot.taskexcuter.WebDriverPool;
 import com.scu.weibobot.taskexcuter.WeiboBotExecutor;
-import com.scu.weibobot.utils.ProxyUtil;
+import com.scu.weibobot.utils.GenerateInfoUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.openqa.selenium.WebDriver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+
+import static com.scu.weibobot.utils.WebDriverUtil.waitSeconds;
 
 
 @Service
@@ -28,8 +27,6 @@ public class ScheduleService {
     @Autowired
     private BotInfoService botInfoService;
     @Autowired
-    private ProxyIpService proxyIpService;
-    @Autowired
     private ThreadPoolTaskExecutor taskExecutor;
 
     @Scheduled(cron= Consts.RUN_PER_HOUR_CRON)
@@ -39,15 +36,31 @@ public class ScheduleService {
         List<WeiboAccount> weiboAccountList = accountService.findAllAccount();
         //根据账号去寻找对应的资料
         for (WeiboAccount account : weiboAccountList){
-            BotInfo temp = botInfoService.findBotInfoByAccountId(account.getAccountId());
-            //然后设置好WeiboBotExecuter的属性
-            WeiboBotExecutor botExecutor = new WeiboBotExecutor();
-            botExecutor.setBotInfo(temp);
-            botExecutor.setWeiboAccount(account);
-            //使用线程池调用WeiboBotExecuter的run方法
-            taskExecutor.execute(botExecutor);
+            BotInfo botInfo = botInfoService.findBotInfoByAccountId(account.getAccountId());
+            if (getStartFlag(botInfo)) {
+                //然后设置好WeiboBotExecuter的属性
+                WeiboBotExecutor botExecutor = new WeiboBotExecutor();
+                botExecutor.setBotInfo(botInfo);
+                botExecutor.setWeiboAccount(account);
+                //使用线程池调用WeiboBotExecuter的run方法
+                taskExecutor.execute(botExecutor);
+                waitSeconds(2);
+            } else {
+                log.info("bot{}尚未达到概率", botInfo.getBotId());
+            }
+
         }
 
+    }
+
+    private boolean getStartFlag(BotInfo botInfo) {
+        //获取使用度对应的概率
+        double prob = GenerateInfoUtil.getUseWeiboProb(botInfo.getBotLevel());
+        log.info("对应使用度概率为{}", prob);
+        //随机数
+        int nowProb = new Random().nextInt(100) + 1;
+        log.info("当前随机数为{}", nowProb);
+        return (nowProb / 100) < prob;
     }
 
 //    @Scheduled(cron = Consts.RUN_PER_DAY_CRON)
@@ -68,7 +81,7 @@ public class ScheduleService {
 //
 //        } finally {
 //            if (driver != null){
-//                WebDriverPool.closeCurrentWebDriver(driver);
+//                WebDriverPool.closeWebDriver(driver);
 //            }
 //        }
 //    }
