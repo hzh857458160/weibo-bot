@@ -2,7 +2,8 @@ package com.scu.weibobot.controller;
 
 import com.scu.weibobot.domain.BotInfo;
 import com.scu.weibobot.domain.WeiboAccount;
-import com.scu.weibobot.domain.consts.Consts;
+import com.scu.weibobot.consts.Consts;
+import com.scu.weibobot.domain.pojo.NickNameAndImgSrc;
 import com.scu.weibobot.service.BotInfoService;
 import com.scu.weibobot.service.WeiboAccountService;
 import com.scu.weibobot.taskexcuter.WebDriverPool;
@@ -11,8 +12,11 @@ import com.scu.weibobot.utils.WeiboOpUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.WebDriver;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -22,28 +26,44 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
+/**
+ * ClassName: MainController
+ * ClassDesc: 主要处理请求的Controller
+ * Author: HanrAx
+ * Date: 2019/02/14
+ **/
 @Slf4j
-@RestController
-public class AccountController {
+@Controller
+public class MainController {
     @Autowired
     private WeiboAccountService accountService;
     @Autowired
     private BotInfoService botInfoService;
 
+    /**
+     * 添加新机器人账号接口
+     *
+     * @param request
+     * @param response
+     * @throws IOException
+     */
+    @ResponseBody
     @PostMapping("/account")
     public void addNewBotAccount(HttpServletRequest request, HttpServletResponse response) throws IOException {
         WebDriver driver = null;
         response.setContentType("application/json;charset=UTF-8");
+        response.setHeader("Access-Control-Allow-Origin", "*");
         String result = "";
         try {
-            response.setHeader("Access-Control-Allow-Origin", "*");
+
             //接收post提交的账号与密码
             String username = request.getParameter("username");
             String password = request.getParameter("password");
             int locationNum = 0;
             while(driver == null) {
-                locationNum = GenerateInfoUtil.generateLocation();
+                locationNum = GenerateInfoUtil.generateProvince();
                 driver = WebDriverPool.getWebDriver(Consts.PROVINCE[locationNum]);
                 Thread.sleep(1000);
             }
@@ -55,7 +75,9 @@ public class AccountController {
             }
             WeiboAccount account = new WeiboAccount(0L, username, password);
             //先登录账号修改资料(需要返回地址)
-            String nickName = GenerateInfoUtil.generateNickName();
+            NickNameAndImgSrc nickNameAndImgSrc = GenerateInfoUtil.generateNicknameAndImgSrc();
+            String nickName = nickNameAndImgSrc.getNickName();
+            String imgSrc = nickNameAndImgSrc.getImgSrc();
             int gender = GenerateInfoUtil.generateGender();
             LocalDate birthDate = GenerateInfoUtil.generateBirthDate();
             String interests = GenerateInfoUtil.generateInterests(gender);
@@ -75,10 +97,12 @@ public class AccountController {
             botInfo.setBirthDate(birthDate);
             botInfo.setBotLevel(GenerateInfoUtil.generateBotLevel());
             botInfo.setGender(gender);
-            botInfo.setImgSrc(GenerateInfoUtil.generateImgSrc());
+            botInfo.setImgSrc(imgSrc);
             botInfo.setInterests(interests);
             botInfo.setLocation(location);
             botInfo.setNickName(nickName);
+            botInfo.setEnable(true);
+
             //再将资料存入数据库
             botInfoService.addBotInfo(botInfo);
 
@@ -99,5 +123,30 @@ public class AccountController {
         }
 
 
+    }
+
+
+    @GetMapping("/index")
+    public String index(Model model) {
+        List<BotInfo> botList = botInfoService.finaAll();
+        int i = 0;
+        for (BotInfo botInfo : botList) {
+            if (botInfo.isEnable()) {
+                i++;
+            }
+        }
+
+        model.addAttribute("botList", botList);
+        model.addAttribute("activeCount", i);
+        return "home";
+    }
+
+
+    @GetMapping("/account")
+    public String getSpecificBotPage(HttpServletRequest request, Model model) {
+        String botId = request.getParameter("botId");
+        Optional<BotInfo> optBotInfo = botInfoService.findBotInfoById(Long.valueOf(botId));
+        optBotInfo.ifPresent(botInfo -> model.addAttribute("bot", botInfo));
+        return "showBot";
     }
 }

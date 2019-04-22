@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class BotInfoService {
@@ -28,6 +29,14 @@ public class BotInfoService {
             locationList.add(botInfo.getLocation());
         }
         return locationList;
+    }
+
+    public List<BotInfo> finaAll() {
+        return botInfoRepository.findAll();
+    }
+
+    public Optional<BotInfo> findBotInfoById(Long id) {
+        return botInfoRepository.findById(id);
     }
 
 

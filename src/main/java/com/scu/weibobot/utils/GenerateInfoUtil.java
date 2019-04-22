@@ -1,6 +1,7 @@
 package com.scu.weibobot.utils;
 
-import com.scu.weibobot.domain.consts.Consts;
+import com.scu.weibobot.consts.Consts;
+import com.scu.weibobot.domain.pojo.NickNameAndImgSrc;
 import com.scu.weibobot.taskexcuter.WebDriverPool;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
@@ -11,62 +12,67 @@ import org.openqa.selenium.WebElement;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static com.scu.weibobot.utils.WebDriverUtil.waitSeconds;
 
-
+/**
+ * ClassName: GenerateInfoUtil
+ * ClassDesc: 工具类，实现对于机器人身份的生成
+ * Author: HanrAx
+ * Date: 2019/02/15
+ **/
 @Slf4j
 public class GenerateInfoUtil {
     private static Random random = new Random();
-    private static String nickName = null;
-    private static String imgSrc = null;
 
 
-    //生成昵称
-    public static String generateNickName() {
-        if (nickName == null){
-            getNicknameAndImgSrc();
-        }
-        String name = addSuffixToNickName(nickName);
-        nickName = null;
-        return name;
-
-    }
+    /**
+     * 重新为昵称添加后缀
+     *
+     * @param tempName 原昵称
+     * @return 修改后缀的昵称
+     */
     public static String reAddSuffixToNickName(String tempName){
         if ("".equals(tempName) || tempName == null){
             throw new RuntimeException("当前处于reAddSuffixToNickName(String tempName), 参数错误:" + tempName);
         }
-        return addSuffixToNickName(tempName.substring(0, nickName.length() - 1));
+        return addSuffixToNickName(tempName.substring(0, tempName.length() - 1));
     }
 
-    //生成昵称后缀
-    public static String addSuffixToNickName(String tempName){
+    /**
+     * 为昵称生成随机后缀
+     *
+     * @param tempName 原昵称
+     * @return 添加后缀的昵称
+     */
+    private static String addSuffixToNickName(String tempName){
         int ran = random.nextInt(Consts.NICKNAME_SUFFIX.length);
         return tempName + Consts.NICKNAME_SUFFIX[ran];
     }
 
 
     /**
-     * 生成性别 男0女1
-     * @return
+     * 根据性别分布生成性别 男0女1
+     * @return 性别
      */
-    public static int generateGender(){
-        return random.nextInt(100) < Consts.BOY_PROB ? 0 : 1;
+    public static int generateGender() {
+        return random.nextInt(100) + 1 < Consts.BOY_PROB ? 0 : 1;
     }
 
     /**
-     * 生成兴趣爱好，从兴趣库中随机获取三个兴趣
-     * @return
+     * 根据性别生成兴趣爱好，从兴趣库中随机获取三个兴趣
+     * 以兴趣1#兴趣2#兴趣3#....格式拼接
+     * @param gender 性别
+     * @return 兴趣爱好字符串
      */
     public static String generateInterests(int gender){
         String[] tempArray, a, b;
         if (gender == 0){
             a = Consts.INTERESTS_BOY;
-        } else {
+        } else if (gender == 1){
             a = Consts.INTERESTS_GIRL;
+        } else {
+            throw new RuntimeException("gender参数错误: " + gender);
         }
         b = Consts.INTERESTS_NEUTRAL;
         tempArray = new String[a.length + b.length];
@@ -84,34 +90,18 @@ public class GenerateInfoUtil {
         return interestSb.toString();
     }
 
-    /**
-     * 生成头像图片地址
-     * @return
-     */
-    public static String generateImgSrc() throws InterruptedException {
-        if (imgSrc == null) {
-            getNicknameAndImgSrc();
-        }
-        String tempImgSrc = imgSrc;
-        imgSrc = null;
-        return tempImgSrc;
-
-
-    }
 
     /**
-     * 因为微博选择地址下拉式选项，
-     * 所以暂定格式为1-5,
-     * 数字为选择地址的位置，
-     * 例如:四川 成都 22-1
+     * 生成省份库索引
+     * @return 省份索引
      */
-    public static int generateLocation(){
+    public static int generateProvince(){
         return random.nextInt(Consts.PROVINCE.length);
     }
 
     /**
-     * 生成一个随机的日期
-     * @return
+     * 生成一个随机的出生日期
+     * @return 出生日期
      */
     public static LocalDate generateBirthDate(){
         int year = generateBirthYear();
@@ -123,10 +113,10 @@ public class GenerateInfoUtil {
     /**
      * 生成一个随机的天数
      * 因为每个月的总天数不同
-     * 所以需要判断后
-     * @param year
-     * @param month
-     * @return
+     * 所以需要判断后再随机
+     * @param year 年份
+     * @param month 月份
+     * @return 天数
      */
     private static int generateDay(int year, int month) {
         Calendar cal = Calendar.getInstance();
@@ -137,9 +127,8 @@ public class GenerateInfoUtil {
 
     /**
      * 根据问卷调查的年龄分布
-     * 生成相应概率的年龄
-     * 15-19：7%，20-24：40%，25-29：20%，30-39：27%，40以上：6%
-     * @return
+     * 生成相应概率的年份
+     * @return 出生年份
      */
     private static int generateBirthYear(){
         int curYear = LocalDate.now().getYear();
@@ -170,16 +159,17 @@ public class GenerateInfoUtil {
 
     /**
      * 根据问卷调查结果，生成机器人等级
-     * N:7% , H:59%, VH:34%
      * @return bot等级
      */
-    public static String generateBotLevel(){
-        int ran = random.nextInt(100);
+    public static String generateBotLevel() {
+        int ran = random.nextInt(100) + 1;
         String result;
-        if (ran < 7){
+        if (ran < Consts.N_LEVEL){
             result = Consts.BOT_LEVEL[0];
-        } else if (ran < (7 + 59)){
+
+        } else if (ran < Consts.H_LEVEL){
             result = Consts.BOT_LEVEL[1];
+
         } else {
             result = Consts.BOT_LEVEL[2];
         }
@@ -189,9 +179,8 @@ public class GenerateInfoUtil {
     /**
      * 通过在互联网上爬取
      * 来生成相应的昵称与头像地址
-     * @return
      */
-    private static void getNicknameAndImgSrc() {
+    public static NickNameAndImgSrc generateNicknameAndImgSrc() {
         String url = "https://music.163.com/";
         WebDriver driver = null;
 
@@ -243,9 +232,11 @@ public class GenerateInfoUtil {
             WebElement specNickname = commentList.get(ran4).findElement(By.cssSelector("div.cntwrap > div > div > a"));
 
             //微博h5版本无法设置头像
-            imgSrc = specHeadImg.getAttribute("src");
-            nickName = specNickname.getText();
+            String imgSrc = specHeadImg.getAttribute("src");
+            String nickName = specNickname.getText();
+
             log.info("imgSrc:{}, nickName:{}", imgSrc, nickName);
+            return new NickNameAndImgSrc(nickName, imgSrc);
         } finally {
             if (driver != null) {
                 driver.quit();
@@ -257,8 +248,8 @@ public class GenerateInfoUtil {
     /**
      * 根据机器人当前的等级，已经时间区间，来生成当前使用微博的概率
      *
-     * @param botLevel
-     * @return
+     * @param botLevel 机器人等级
+     * @return 运行概率
      */
     public static double getUseWeiboProb(String botLevel) {
         if (botLevel == null || "".equals(botLevel)) {
@@ -279,6 +270,11 @@ public class GenerateInfoUtil {
         double prob = 0.0;
         int hour = LocalTime.now().getHour();
 
+        if (isContained(Consts.VERY_LOW_ACTIVE_TIME, hour)) {
+            log.info("当前处于极低活跃度时间", hour);
+            prob = botProb * Consts.VL_ACTIVE_PROB;
+
+        }
         if (isContained(Consts.LOW_ACTIVE_TIME, hour)) {
             log.info("当前处于低活跃度时间", hour);
             prob = botProb * Consts.L_ACTIVE_PROB;
@@ -300,16 +296,26 @@ public class GenerateInfoUtil {
         return prob;
     }
 
+    /**
+     *  数组是否包含某数字
+     * @param array 数组
+     * @param x 该数字
+     * @return 是否包含某数字
+     */
     private static boolean isContained(int[] array, int x) {
         for (int temp : array) {
             if (temp == x) {
                 return true;
             }
         }
-
         return false;
     }
 
+    /**
+     *  通过爬取网站中的相关文字来生成兴趣微博内容
+     * @param keyWord 关键字
+     * @return 内容
+     */
     public static String generatePostContent(String keyWord) {
         log.info("进入generatePostContent({})", keyWord);
         StringBuilder contentSb = new StringBuilder();
@@ -357,7 +363,6 @@ public class GenerateInfoUtil {
             }
 
         }
-
         return contentSb.toString();
     }
 

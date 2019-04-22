@@ -3,7 +3,7 @@ package com.scu.weibobot.taskexcuter;
 import com.scu.weibobot.domain.BotInfo;
 import com.scu.weibobot.domain.pojo.ProxyIp;
 import com.scu.weibobot.service.BotInfoService;
-import com.scu.weibobot.service.ProxyIpService;
+import com.scu.weibobot.utils.PropertiesUtil;
 import com.scu.weibobot.utils.ProxyUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.WebDriver;
@@ -22,18 +22,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 @Component
 public class WebDriverPool {
-    private static final String DRIVER_PROPERTY = "webdriver.chrome.driver";
-    private static final String CHROME_DRIVER_PATH = "D:\\chrome-test\\Chrome-bin\\chromedriver.exe";
-//    private static final String CHROME_DRIVER_PATH = "C:\\Users\\HanrAx\\AppData\\Local\\Google\\Chrome\\Application\\chromedriver.exe";
+
+//    private static String DRIVER_PROPERTY = "webdriver.chrome.driver";
+//    private static String CHROME_DRIVER_PATH = "D:\\chrome-test\\Chrome-bin\\chromedriver.exe";
 
     private static int CAPACITY = 3;
     private static AtomicInteger refCount = new AtomicInteger(0);
     private static Semaphore botSemaphore = new Semaphore(CAPACITY);
-    private static Semaphore proxySemaphore = new Semaphore(1);
+    //    private static Semaphore proxySemaphore = new Semaphore(1);
     @Autowired
     private BotInfoService botInfoService;
-    @Autowired
-    private ProxyIpService proxyIpService;
 
     public static WebDriverPool webDriverPool;
 
@@ -41,11 +39,13 @@ public class WebDriverPool {
     public void init(){
         webDriverPool = this;
         webDriverPool.botInfoService = this.botInfoService;
-        webDriverPool.proxyIpService = this.proxyIpService;
     }
 
     static {
-        System.setProperty(DRIVER_PROPERTY, CHROME_DRIVER_PATH);
+        PropertiesUtil.loadAllProperties("config.properties");
+        String driverProperty = PropertiesUtil.getProperty("DRIVER_PROPERTY");
+        String chromeDriverPath = PropertiesUtil.getProperty("CHROME_DRIVER_PATH");
+        System.setProperty(driverProperty, chromeDriverPath);
     }
 
     private static ChromeOptions getInitChromeOptions(){
@@ -79,10 +79,10 @@ public class WebDriverPool {
             log.info("获取信号量成功");
             log.info("进入getWebDriver({})", province);
             if (province != null) {
-                proxySemaphore.acquire();
+//                proxySemaphore.acquire();
                 //TODO：当不存在当前区域的代理时的处理
-                ProxyIp proxyIp = ProxyUtil.getOneProxyWithLocation(province);
-                proxySemaphore.release();
+                ProxyIp proxyIp = ProxyUtil.getOneProxyWithProvince(province);
+//                proxySemaphore.release();
                 if (proxyIp == null) {
                     botSemaphore.release();
                     return null;
@@ -108,7 +108,7 @@ public class WebDriverPool {
      * @return
      */
     public static WebDriver getWebDriver(BotInfo botInfo){
-       String province = ProxyUtil.getProvinceFromLocation(botInfo.getLocation());
+        String province = getProvinceFromLocation(botInfo.getLocation());
        return getWebDriver(province);
     }
 
@@ -130,5 +130,19 @@ public class WebDriverPool {
             webDriver.quit();
         }
 
+    }
+
+    private static String getProvinceFromLocation(String location) {
+        //解析出省会
+        String province;
+        if (location.contains("内蒙古")) {
+            province = "内蒙古";
+        } else if (location.contains("黑龙江")) {
+            province = "黑龙江";
+        } else {
+            province = location.substring(0, 2);
+        }
+
+        return province;
     }
 }

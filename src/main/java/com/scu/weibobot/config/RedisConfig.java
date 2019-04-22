@@ -1,4 +1,4 @@
-package com.scu.weibobot.domain.config;
+package com.scu.weibobot.config;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;

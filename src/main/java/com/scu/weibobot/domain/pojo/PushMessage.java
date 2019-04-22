@@ -7,6 +7,12 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalTime;
 
+/**
+ * ClassName: PushMessage
+ * ClassDesc: 推送消息内容对象
+ * Author: HanrAx
+ * Date: 2019/03/09
+ **/
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

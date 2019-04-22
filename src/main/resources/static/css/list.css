@@ -1,0 +1,40 @@
+.bot-list li {
+    width: 12.5%;
+    font-size: 12px;
+}
+
+.bot-list li {
+    float: left;
+    width: 16.66%;
+    height: 150px;
+    padding: 10px;
+    font-size: 10px;
+    line-height: 1.4;
+    text-align: center;
+    background-color: #e9f4f9;
+    border: 1px solid #fff;
+}
+
+.list-container {
+    margin: 0 -10px 20px;
+    overflow: hidden;
+}
+
+.bot-list {
+    padding-left: 0;
+    list-style: none;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.bot-name {
+    color: #666;
+    font-size: 12px;
+}
+
+.headimg {
+    text-align: center;
+    border-radius: 100%;
+    overflow: hidden;
+}
+

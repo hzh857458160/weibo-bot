@@ -1,18 +1,14 @@
 package com.scu.weibobot.utils;
 
-import com.scu.weibobot.domain.consts.Consts;
-import com.scu.weibobot.service.RedisService;
+import com.scu.weibobot.consts.Consts;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.Select;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Random;
-
 
 import static com.scu.weibobot.utils.WebDriverUtil.waitSeconds;
 
@@ -36,59 +32,52 @@ public class WeiboOpUtil {
      * @return
      */
     public static boolean loginWeibo(WebDriver driver, String username, String password) {
-        log.info("查看是否存有cookie");
-        if (WebDriverUtil.getUrlWithCookie(driver, BASE_URL, username)){
-            return true;
-        }
+//        log.info("查看是否存有cookie");
+//        if (WebDriverUtil.getUrlWithCookie(driver, BASE_URL, username)){
+//            return true;
+//        }
         log.info("登录微博，账号为{}", username);
         driver.get(LOGIN_URL);
-        WebDriverUtil.waitUntilElement(driver, By.id("loginName"));
+        WebDriverUtil.waitUntilElementExist(driver, 10, By.id("loginName"));
 
-        while(true){
-            log.info("输入用户名");
-            WebElement usernameInput = WebDriverUtil.forceGetElement(By.id("loginName"), driver);
-            usernameInput.sendKeys(username);
-            waitSeconds(2);
+        log.info("输入用户名");
+        WebElement usernameInput = WebDriverUtil.forceGetElement(By.id("loginName"), driver);
+        usernameInput.click();
+        usernameInput.sendKeys(username);
+        waitSeconds(3);
 
-            log.info("输入密码");
-            WebElement passwordInput = WebDriverUtil.forceGetElement(By.id("loginPassword"), driver);
-            passwordInput.sendKeys(password);
-            waitSeconds(2);
+        log.info("输入密码");
+        WebElement passwordInput = WebDriverUtil.forceGetElement(By.id("loginPassword"), driver);
+        passwordInput.click();
+        passwordInput.sendKeys(password);
+        waitSeconds(3);
 
-            log.info("点击登录");
-            WebElement loginBtn = WebDriverUtil.forceGetElement(By.id("loginAction"), driver);
-            loginBtn.click();
-            waitSeconds(5);
+        log.info("点击登录");
+        WebElement loginBtn = WebDriverUtil.forceGetElement(By.id("loginAction"), driver);
+        loginBtn.click();
+        waitSeconds(5);
 
-            WebElement errorMsg = WebDriverUtil.isElementExist(By.id("errorMsg"), driver);
-            if (errorMsg != null){
-                log.info(errorMsg.isDisplayed() + "");
-                if (errorMsg.isDisplayed()){
-                    log.info("账号密码错误");
-                    return false;
-                }
+        WebElement errorMsg = WebDriverUtil.isElementExist(By.id("errorMsg"), driver);
+        if (errorMsg != null) {
+            log.info(errorMsg.isDisplayed() + "");
+            if (errorMsg.isDisplayed()) {
+                log.info("账号密码错误");
+                return false;
             }
-
-            String secureUrl = "security.weibo.com/captcha/geetest";
-            while(driver.getCurrentUrl().contains(secureUrl)){
-                log.info("受到微博限制，进入身份验证");
-                waitSeconds(8);
-            }
-
-
-            String curUrl = driver.getCurrentUrl();
-            if (curUrl.equals(LOGIN_URL)){
-                log.info("网页没有跳转，可能是卡住了，重新输入");
-                driver.navigate().refresh();
-
-            } else {
-               log.info("成功登陆到m.weibo.cn");
-               break;
-            }
-
         }
 
-        WebDriverUtil.saveCurrentCookies(driver, username, SECONDS_OF_ONE_DAY);
+        String secureUrl = "security.weibo.com/captcha/geetest";
+        while (driver.getCurrentUrl().contains(secureUrl)) {
+            log.info("受到微博限制，进入身份验证");
+            WebElement checkBtn = WebDriverUtil.forceGetElement(By.id("embed-captcha"), driver);
+            Actions actions = new Actions(driver);
+            actions.moveToElement(checkBtn);
+            actions.click();
+            waitSeconds(8);
+        }
+
+        log.info("成功登陆到m.weibo.cn");
+//        WebDriverUtil.saveCurrentCookies(driver, username, SECONDS_OF_ONE_DAY);
         return true;
     }
 
@@ -130,7 +119,7 @@ public class WeiboOpUtil {
 
     public static void likeWeibo(WebElement weibo) {
         log.info("点赞微博");
-        WebDriverUtil.forceGetElement(By.cssSelector(LIKE_BTN_SELECTOR), weibo);
+        WebDriverUtil.forceGetElement(By.cssSelector(LIKE_BTN_SELECTOR), weibo).click();
 //        return getWeiboName(weibo);
     }
 
@@ -149,7 +138,6 @@ public class WeiboOpUtil {
             waitSeconds(2);
             WebDriverUtil.forceGetElement(By.cssSelector("div.nav-left"), driver).click();
         }
-//        return getWeiboName(weibo);
 
     }
 
@@ -158,16 +146,18 @@ public class WeiboOpUtil {
     }
 
     public static void reportWeibo(WebDriver driver, WebElement weibo, String content) {
-        log.info("转发微博:{}", content);
-        WebDriverUtil.forceGetElement(By.cssSelector(REPORT_BTN_SELECTOR), weibo).click();
-        inputContentAndSubmit(driver, content);
-//        return getWeiboName(weibo);
-    }
+        try {
+            log.info("转发微博:{}", content);
+            WebDriverUtil.forceGetElement(By.cssSelector(REPORT_BTN_SELECTOR), weibo).click();
+            inputContentAndSubmit(driver, content);
 
-    public static void scrollToElement(WebDriver driver, WebElement element) {
-        log.info("scroll view element");
-        WebDriverUtil.jsExecuter(driver, "arguments[0].scrollIntoView(true);", element);
-        waitSeconds(1);
+        } catch (WebDriverException e) {
+            if (e.getMessage().contains("not clickable at")) {
+                WebDriverUtil.scrollPage(driver, 200);
+                reportWeibo(driver, weibo, content);
+            }
+        }
+
     }
 
     /**
@@ -260,12 +250,35 @@ public class WeiboOpUtil {
                 WebDriverUtil.forceGetElement(By.cssSelector("ul.nav-item.center > li:nth-child(2)"), driver).click();
                 waitSeconds(3);
                 //获取到可关注按钮（直接获取到当前所有可关注的按钮的list）
+
                 //TODO:随便加个需求，只关注粉丝不低于1万的博主
+
+//                List<WebElement> subscribeList = WebDriverUtil.forceGetElementList(By.cssSelector("div.card-main"), driver);
+//                String js = "arguments[0].click();";
+//                for (WebElement tempUser : subscribeList){
+//                    WebDriverUtil.scrollToElement(driver, tempUser);
+//                    String fansNum = WebDriverUtil.forceGetElement(
+//                            By.cssSelector("div.m-text-box > h4:nth-child(3)"), tempUser).getText();
+//                    if (!fansNum.contains("万")){
+//                        continue;
+//                    }
+//                    WebElement addBox = WebDriverUtil.isElementExist(By.cssSelector("div.m-add-box"), tempUser);
+//                    if (addBox == null){
+//                        continue;
+//                    }
+//                    String addTip = WebDriverUtil.forceGetElement(By.cssSelector("h4"), addBox).getText();
+//                    if (addTip.equals("加关注")){
+//                        addBox.click();
+//                    }
+//                }
+
+
                 List<WebElement> followList =  WebDriverUtil.forceGetElementList(By.cssSelector("i.m-font.m-font-follow"), driver);
+
                 String jsClick = "arguments[0].click();";
                 for(int i = 0; i < followList.size(); i++){
                     if ((i + 1) % 5 == 0){
-                        WebDriverUtil.scrollWeibo(driver, 550);
+                        WebDriverUtil.scrollPage(driver, 550);
                     }
                     WebDriverUtil.jsExecuter(driver, jsClick, followList.get(i));
                     waitSeconds(1);

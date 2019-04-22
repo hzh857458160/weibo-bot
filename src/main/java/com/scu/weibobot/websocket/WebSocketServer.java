@@ -1,4 +1,4 @@
-package com.scu.weibobot.taskexcuter;
+package com.scu.weibobot.websocket;
 
 import com.scu.weibobot.domain.pojo.PushMessage;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +11,12 @@ import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 
+/**
+ * ClassName: WebSocketServer
+ * ClassDesc: WebSocket后台控制类
+ * Author: HanrAx
+ * Date: 2019/03/09
+ **/
 @Component
 @ServerEndpoint("/websocket")
 @Slf4j
@@ -69,10 +75,19 @@ public class WebSocketServer {
         error.printStackTrace();
     }
 
+    /**
+     * 通过WebSocket发送消息
+     *
+     * @param message
+     * @throws IOException
+     */
     public void sendMessage(String message) throws IOException {
         session.getBasicRemote().sendText(message);
     }
 
+    /**
+     * 开启线程，不断推送消息到前端
+     */
     private void pushLogger() {
         Runnable runnable = () -> {
             boolean flag = true;
@@ -80,10 +95,12 @@ public class WebSocketServer {
                 try {
                     PushMessage pushMessage = MessageQueue.getInstance().poll();
                     sendMessage(pushMessage.toString());
+                    Thread.sleep(1000);
 
-                } catch (IOException e) {
+                } catch (Exception e) {
                     log.warn(e.getMessage());
                     flag = false;
+
                 }
             }
         };

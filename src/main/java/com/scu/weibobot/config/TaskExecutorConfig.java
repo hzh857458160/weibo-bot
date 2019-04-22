@@ -1,4 +1,4 @@
-package com.scu.weibobot.taskexcuter;
+package com.scu.weibobot.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
@@ -12,6 +12,12 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.Executor;
 
+/**
+ * ClassName: TaskExecutorConfig
+ * ClassDesc: 线程池配置类
+ * Author: HanrAx
+ * Date: 2019/02/10
+ **/
 @Configuration
 @ComponentScan("com.scu.weibobot.taskexcuter")
 @EnableAsync //利用@EnableAsync注解开启异步任务支持
@@ -20,6 +26,7 @@ import java.util.concurrent.Executor;
 public class TaskExecutorConfig implements AsyncConfigurer {
     //配置类实现AsyncConfigurer接口并重写getAsyncExcutor方法，并返回一个ThreadPoolTaskExevutor
     //这样我们就获得了一个基于线程池的TaskExecutor
+    //以下数据从配置文件中得到
     @Value("$(CORE_POOL_SIZE)")
     private String corePoolSize;
     @Value("$(MAX_POOL_SIZE)")

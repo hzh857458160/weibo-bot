@@ -2,10 +2,12 @@ package com.scu.weibobot.taskexcuter;
 
 import com.scu.weibobot.domain.BotInfo;
 import com.scu.weibobot.domain.WeiboAccount;
-import com.scu.weibobot.domain.consts.Consts;
+import com.scu.weibobot.consts.Consts;
 import com.scu.weibobot.domain.pojo.PushMessage;
 import com.scu.weibobot.utils.GenerateInfoUtil;
+import com.scu.weibobot.utils.WebDriverUtil;
 import com.scu.weibobot.utils.WeiboOpUtil;
+import com.scu.weibobot.websocket.MessageQueue;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -16,6 +18,12 @@ import java.util.Random;
 
 import static com.scu.weibobot.utils.WebDriverUtil.waitSeconds;
 
+/**
+ * ClassName: WeiboBotExecutor
+ * ClassDesc: 实现Runnable接口，机器人线程类
+ * Author: HanrAx
+ * Date: 2019/04/09
+ **/
 @Slf4j
 public class WeiboBotExecutor implements Runnable {
 
@@ -44,12 +52,9 @@ public class WeiboBotExecutor implements Runnable {
         PushMessage pushMsg = new PushMessage();
         pushMsg.setBotInfo(botInfo);
         try {
-            for (int i = 0; i < 3; i++) {
-                driver = WebDriverPool.getWebDriver(botInfo);
-                waitSeconds(2);
-                if (driver != null) {
-                    break;
-                }
+            driver = WebDriverPool.getWebDriver(botInfo);
+            if (driver == null) {
+                driver = WebDriverPool.getWebDriver();
             }
 
             addMessage(pushMsg, "获取到可用的WebDriver");
@@ -69,7 +74,7 @@ public class WeiboBotExecutor implements Runnable {
             addMessage(pushMsg, "获取到当前的微博列表 size为" + weiboList.size());
             for (int i = 0; i < weiboList.size(); i++) {
                 WebElement weibo = weiboList.get(i);
-                WeiboOpUtil.scrollToElement(driver, weibo);
+                WebDriverUtil.scrollToElement(driver, weibo);
                 String weiboName = WeiboOpUtil.getWeiboName(weibo);
                 addMessage(pushMsg, "阅读 " + weiboName + " 的微博");
                 //30%的概率遇到感兴趣的微博，仔细阅读并点赞
@@ -86,7 +91,6 @@ public class WeiboBotExecutor implements Runnable {
                 int commentRandom = random.nextInt(100) + 1;
                 if (commentRandom <= Consts.COMMENT_WEIBO_PROB) {
 //                    WeiboOpUtil.commentWeibo(driver, weibo, "");
-//                    weiboList = WeiboOpUtil.getWeiboList(driver);
 //                    addMessage(pushMsg, "评论 " + weiboName + " 的微博：" + content);
                 }
                 waitSeconds(1);
@@ -94,10 +98,10 @@ public class WeiboBotExecutor implements Runnable {
                 int reportRandom = random.nextInt(100) + 1;
                 if (reportRandom <= Consts.REPORT_WEIBO_PROB) {
                     WeiboOpUtil.reportWeibo(driver, weibo);
-                    weiboList = WeiboOpUtil.getWeiboList(driver);
                     addMessage(pushMsg, "转发 " + weiboName + " 的微博");
                 }
                 waitSeconds(1);
+                weiboList = WeiboOpUtil.getWeiboList(driver);
             }
 
         } finally {

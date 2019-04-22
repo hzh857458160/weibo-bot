@@ -1,13 +1,19 @@
-package com.scu.weibobot.taskexcuter;
+package com.scu.weibobot.websocket;
 
 import com.scu.weibobot.domain.pojo.PushMessage;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+/**
+ * ClassName: MessageQueue
+ * ClassDesc: 消息队列
+ * Author: HanrAx
+ * Date: 2019/03/09
+ **/
 public class MessageQueue {
     //队列大小
-    public static final int QUEUE_MAX_SIZE = 10000;
+    private static final int QUEUE_MAX_SIZE = 10000;
     private static MessageQueue alarmMessageQueue = new MessageQueue();
     //阻塞队列
     private BlockingQueue<PushMessage> blockingQueue = new LinkedBlockingQueue<>(QUEUE_MAX_SIZE);

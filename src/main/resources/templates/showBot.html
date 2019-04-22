@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>机器人信息</title>
+
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+    <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.min.js"
+            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+            crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="jumbotron">
+    <div class="container">
+        <div>
+            <img src="#" th:src="${bot.imgSrc}" class="headimg" style="margin: 0 auto;" alt=""/>
+            <span th:text="${bot.nickName}" style="font-size: 30px">NickName</span>
+        </div>
+    </div>
+
+</div>
+<div class="container">
+    <ul class="nav nav-pills">
+        <li role="presentation" class="active"><a href="#botInfo" data-toggle="tab" style="font-size: 25px">机器人资料</a>
+        </li>
+        <li role="presentation"><a href="#runningState" data-toggle="tab" style="font-size: 25px">机器人运行状态</a></li>
+    </ul>
+    <br/>
+    <br/>
+    <div id="myTabContent" class="tab-content">
+        <div class="tab-pane fade in active" id="botInfo">
+            <ul class="list-group">
+                <li class="list-group-item" th:text="'性别：' + ${bot.gender}">性别：男</li>
+                <li class="list-group-item" th:text="'兴趣爱好：' + ${bot.interests}">兴趣爱好：</li>
+                <li class="list-group-item" th:text="'所在地：' + ${bot.location}">所在地：</li>
+                <li class="list-group-item" th:text="'出生日期：' + ${bot.birthDate}">出生日期：</li>
+                <li class="list-group-item" th:text="'机器人等级：' + ${bot.botLevel}">机器人等级：</li>
+                <li class="list-group-item" th:text="'是否启用：' + ${bot.enable}">是否启用：</li>
+            </ul>
+        </div>
+        <div class="tab-pane fade" id="runningState">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<style>
+    .panel-body {
+        height: 1200px;
+        overflow: hidden;
+        white-space: pre;
+        font-size: 25px;
+    }
+</style>
+</html>

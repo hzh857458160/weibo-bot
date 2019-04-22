@@ -3,6 +3,8 @@ package com.scu.weibobot.utils;
 import com.scu.weibobot.service.RedisService;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -59,14 +61,9 @@ public class WebDriverUtil {
 
     }
 
-    public static void waitUntilElement(WebDriver driver, By by) {
-        while (true) {
-            try {
-                driver.findElement(by);
-            } catch (Exception e) {
-                waitSeconds(2);
-            }
-        }
+    public static void waitUntilElementExist(WebDriver driver, int waitMaxTime, By by) {
+        new WebDriverWait(driver, waitMaxTime)
+                .until(ExpectedConditions.visibilityOfElementLocated(by));
     }
 
     /**
@@ -154,12 +151,18 @@ public class WebDriverUtil {
     /**
      * 检查当前元素是否存在
      * @param selector
-     * @param driver
+     * @param obj
      * @return
      */
-    public static WebElement isElementExist(By selector, WebDriver driver){
+    public static WebElement isElementExist(By selector, Object obj) {
         try {
-            return driver.findElement(selector);
+            if (obj instanceof WebDriver) {
+                return ((WebDriver) obj).findElement(selector);
+
+            }
+            if (obj instanceof WebElement) {
+                return ((WebElement) obj).findElement(selector);
+            }
 
         } catch (NoSuchElementException e){
             log.info("该元素不存在，选择器为{}", selector.toString());
@@ -211,20 +214,13 @@ public class WebDriverUtil {
         }
     }
 
-    /**
-     * 关闭当前浏览器的当前页面
-     * @param driver
-     */
-    public static void closeCurrentTab(WebDriver driver){
-        driver.quit();
-    }
 
     /**
      * 滑动滑动条
      * @param driver
      * @param num
      */
-    public static void scrollWeibo(WebDriver driver, int num){
+    public static void scrollPage(WebDriver driver, int num) {
         log.info("控制滑动条向下滑动{}像素", num);
         String js1 =  "var top = document.documentElement.scrollTop + " + num
                 + "; scrollTo(0, top)";
@@ -238,9 +234,15 @@ public class WebDriverUtil {
         waitSeconds(1);
     }
 
+    public static void scrollToElement(WebDriver driver, WebElement element) {
+//        log.info("scroll view element");
+        WebDriverUtil.jsExecuter(driver, "arguments[0].scrollIntoView(true);", element);
+        waitSeconds(1);
+    }
+
     public static void scrollToBottom(WebDriver driver){
         log.info("滑动滚动条到底部");
-        scrollWeibo(driver, 20000);
+        scrollPage(driver, 20000);
     }
 
     public static Set<Cookie> getCookies(WebDriver driver){
@@ -264,11 +266,11 @@ public class WebDriverUtil {
     }
 
 
-    public void getScreenShot(WebDriver driver) {
-        if (driver instanceof TakesScreenshot) {
-            TakesScreenshot screenshotTaker = (TakesScreenshot) driver;
-            File file = screenshotTaker.getScreenshotAs(OutputType.FILE);
-        }
-    }
+//    public void getScreenShot(WebDriver driver) {
+//        if (driver instanceof TakesScreenshot) {
+//            TakesScreenshot screenshotTaker = (TakesScreenshot) driver;
+//            File file = screenshotTaker.getScreenshotAs(OutputType.FILE);
+//        }
+//    }
 
 }

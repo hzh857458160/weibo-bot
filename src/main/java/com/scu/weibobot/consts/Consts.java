@@ -1,4 +1,4 @@
-package com.scu.weibobot.domain.consts;
+package com.scu.weibobot.consts;
 
 public class Consts {
 
@@ -7,11 +7,14 @@ public class Consts {
             "黑龙江", "上海", "江苏", "浙江", "安徽", "福建", "江西", "山东", "河南", "湖北", "湖南",
             "广东", "广西", "海南", "重庆", "四川", "贵州", "云南", "西藏", "陕西", "甘肃", "青海",
             "宁夏", "新疆", "台湾", "香港", "澳门"};
+    public static final int N_LEVEL = 9;
+    public static final int H_LEVEL = 58 + 9;
+    public static final int VH_LEVEL = 33 + 58 + 9;
 
-    public static final String[] BOT_LEVEL = {"VH", "H", "N"};
-    public static final double[] BOT_LEVEL_PROB = {0.9, 0.7, 0.5};
+    public static final String[] BOT_LEVEL = {"N", "H", "VH"};
+    public static final double[] BOT_LEVEL_PROB = {0.5, 0.7, 0.9};
 
-    public static final String[] INTERESTS_GIRL = {"瑜伽", "烘焙", "舞蹈", "明星", "美妆", };
+    public static final String[] INTERESTS_GIRL = {"瑜伽", "烘焙", "舞蹈", "明星", "美妆"};
     public static final String[] INTERESTS_NEUTRAL = {"唱歌", "生活", "搞笑", "经济", "艺术", "阅读", "美食",
             "动漫", "摄影", "历史", "文化", "旅行", "金融", "游戏", "健康", "设计", "自然", "法律", "电影",
             "音乐", "综艺", "小说", "投资", "小说", "电视剧", "综艺", "家居"};
@@ -28,24 +31,26 @@ public class Consts {
 //            "com.alibaba.android.rimet/10487439 Channel/227200 language/zh-CN'";
 
     //每到整点会运行
-    public static final String RUN_PER_HOUR_CRON = " 0 47 * * *  ?";
-    //每天的0点会运行
-    public static final String RUN_PER_DAY_CRON = "0 36 16 * * ?";
+    public static final String RUN_PER_HOUR_CRON = " 0 59 * * *  ?";
 
     //不同使用度之间的时间点数
     public static final int[] VERY_HIGH_ACTIVE_TIME = {12, 13, 14, 19, 20, 21, 22, 23};
 
-    public static final int[] HIGH_ACTIVE_TIME = {10, 11, 18, 0, 1};
+    public static final int[] HIGH_ACTIVE_TIME = {10, 11, 18, 0};
 
     public static final int[] NORMAL_ACTIVE_TIME = {7, 8, 9, 15, 16, 17};
 
-    public static final int[] LOW_ACTIVE_TIME = {2, 3, 4, 5, 6};
+    public static final int[] LOW_ACTIVE_TIME = {1};
+
+    public static final int[] VERY_LOW_ACTIVE_TIME = {2, 3, 4, 5, 6};
 
     //
     public static final double VH_ACTIVE_PROB = 0.9;
     public static final double H_ACTIVE_PROB = 0.7;
     public static final double N_ACTIVE_PROB = 0.5;
     public static final double L_ACTIVE_PROB = 0.3;
+    public static final double VL_ACTIVE_PROB = 0.1;
+
 
     public static final int AGE_LESS_THAN_15 = 1;
     public static final int AGE_BETWEEN_15_AND_19 = 7 + 1;
@@ -63,4 +68,11 @@ public class Consts {
     public static final int COMMENT_WEIBO_PROB = 20;
 
 
+    public static final int[] REGIONS = {110000, 130000, 140000, 150000, 210000,
+            310000, 320000, 330000, 340000, 350000, 360000, 370000, 410000,
+            420000, 430000, 440000, 500000, 510000, 530000, 610000, 620000};
+
+    public static final String[] REGIONS_PROVINCE = {"北京", "河北", "山西", "内蒙古", "辽宁", "上海",
+            "江苏", "浙江", "安徽", "福建", "江西", "山东", "河南", "湖北", "湖南",
+            "广东", "重庆", "四川", "云南", "陕西", "甘肃"};
 }

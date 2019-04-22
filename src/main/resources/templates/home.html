@@ -39,20 +39,22 @@
           th:href="@{/static/fonts/font-awesome-4.2.0/css/font-awesome.min.css}"/>
     <link rel="stylesheet" type="text/css" href="../static/css/demo.css" th:href="@{/static/css/demo.css}"/>
     <link rel="stylesheet" type="text/css" href="../static/css/component.css" th:href="@{/static/css/component.css}"/>
+    <link rel="stylesheet" type="text/css" href="../static/css/list.css" th:href="@{/static/css/list.css}"/>
+    <script src="http://www.jq22.com/jquery/jquery-1.10.2.js"></script>
 </head>
 
 <body data-spy="scroll" data-target=".navbar-collapse">
-<!-- Preloader -->
-<div id="loading">
-    <div id="loading-center">
-        <div id="loading-center-absolute">
-            <div class="object" id="object_one"></div>
-            <div class="object" id="object_two"></div>
-            <div class="object" id="object_three"></div>
-            <div class="object" id="object_four"></div>
-        </div>
-    </div>
-</div><!--End off Preloader -->
+<!--&lt;!&ndash; Preloader &ndash;&gt;-->
+<!--<div id="loading">-->
+<!--<div id="loading-center">-->
+<!--<div id="loading-center-absolute">-->
+<!--<div class="object" id="object_one"></div>-->
+<!--<div class="object" id="object_two"></div>-->
+<!--<div class="object" id="object_three"></div>-->
+<!--<div class="object" id="object_four"></div>-->
+<!--</div>-->
+<!--</div>-->
+<!--</div>&lt;!&ndash;End off Preloader &ndash;&gt;-->
 
 <div class="culmn">
     <!--Home page style-->
@@ -61,14 +63,14 @@
         <div class="container">
             <!-- Start Header Navigation -->
             <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-menu">
-                    <i class="fa fa-bars"></i>
-                </button>
                 <a class="navbar-brand" href="#home">
-                    <img src="../static/img/logo.png" th:src="@{/static/img/logo.png}"
-                         class="logo logo-display m-top-10" alt="">
-                    <img src="../static/img/logo.jpg" th:src="@{/static/img/logo.jpg}" class="logo logo-scrolled"
-                         alt="">
+                    <div class="logo logo-display m-top-10 text-white"
+                         style="font-size: 32px; margin-top: 20px; margin-bottom: auto">
+                        Han.SCU
+                    </div>
+                    <div class="logo logo-scrolled m-top-10" style="font-size: 32px; margin-top: 20px">
+                        Han.SCU
+                    </div>
 
                 </a>
             </div>
@@ -80,7 +82,7 @@
                     <li><a href="#home">Home</a></li>
                     <li><a href="#addBot">AddBot</a></li>
                     <li><a href="#observer">Observer</a></li>
-                    <li><a href="#about">About</a></li>
+                    <!--<li><a href="#about">About</a></li>-->
                 </ul>
             </div><!-- /.navbar-collapse -->
         </div>
@@ -95,17 +97,15 @@
                     <li><a href="#">Home</a></li>
                     <li><a href="#">AddBot</a></li>
                     <li><a href="#">Observer</a></li>
-                    <li><a href="#">About</a></li>
+                    <!--<li><a href="#">About</a></li>-->
                 </ul>
             </div>
         </div>
         <!-- End Side Menu -->
-
     </nav>
 
 
     <!--Home Sections-->
-
     <section id="home" class="home bg-mega">
         <div class="overlay"></div>
         <div class="container">
@@ -126,42 +126,58 @@
     </section> <!--End off Home Sections-->
 
     <section id="addBot" class="content">
-        <div class="container">
-            <h3>添加新机器人</h3>
-            <span class="input input--hoshi">
+        <!--<hr style="height:1px;border:none;border-top:1px solid #875EA2;" />-->
+    </section>
+    <div class="content container">
+        <div class="section_header" style="margin-bottom: 80px">
+            添加新机器人
+        </div>
+        <span class="input input--hoshi">
                     <input class="input__field input__field--hoshi" type="text" id="input-4"/>
                     <label class="input__label input__label--hoshi input__label--hoshi-color-1" for="input-4">
                         <span class="input__label-content input__label-content--hoshi">用户名</span>
                     </label>
                 </span>
-            <span class="input input--hoshi">
+        <span class="input input--hoshi">
                     <input class="input__field input__field--hoshi" type="password" id="input-5"/>
                     <label class="input__label input__label--hoshi input__label--hoshi-color-2" for="input-5">
                         <span class="input__label-content input__label-content--hoshi">密码</span>
                     </label>
                 </span>
 
-            <div class="m-top-80">
-                <button type="button" class="btn btn-primary" onclick="postAccount()">确认添加</button>
-            </div>
-            <div class="m-top-80">
-                <div class="alert alert-success alert-dismissible" style="display: none" role="alert">添加账号成功！</div>
-                <div class="alert alert-danger alert-dismissible" style="display: none" role="alert">添加账号失败，请稍后重试</div>
-                <div class="alert alert-warning alert-dismissible" style="display: none" role="alert"></div>
-            </div>
-            <br><br>
+        <div class="m-top-80" style="margin-bottom: 80px">
+            <button type="button" class="btn btn-primary" onclick="postAccount()">确认添加</button>
         </div>
-    </section>
+        <div class="m-top-80">
+            <div class="alert alert-success alert-dismissible" style="display: none" role="alert">添加账号成功！</div>
+            <div class="alert alert-danger alert-dismissible" style="display: none" role="alert">添加账号失败，请稍后重试</div>
+            <div class="alert alert-warning alert-dismissible" style="display: none" role="alert"></div>
+        </div>
+    </div>
 
+
+    <hr style="height:1px;border:none;border-top:1px solid #875EA2;"/>
 
     <!--observer Section-->
-    <section id="observer" class="content m-top-40">
+    <section id="observer">
         <div class="container">
-            <h3>当前社交机器人运行状况</h3>
-            <div class="panel panel-default  m-top-100">
-                <div class="panel-body" style="white-space: pre">
-
-                </div>
+            <div class="content">
+                <div class="section_header">当前社交机器人运行状况</div>
+                <span th:text="'(当前有' + ${activeCount} + '个机器人正在运行)'"></span>
+            </div>
+            <div class="list-container">
+                <ul class="bot-list">
+                    <li th:each="bot : ${botList}">
+                        <a href="#" th:target="_blank" th:href="@{/account(botId=${bot.botId})}">
+                            <img src="#" th:src="${bot.imgSrc}" class="thumbnail headimg" style="margin: 0 auto;"
+                                 alt=""/>
+                            <br/>
+                            <h5 th:text="${bot.nickName}">机器人</h5>
+                            <p th:if="${bot.enable}" style="font-size: 20px">运行中</p>
+                            <p th:if="not ${bot.enable}" style="font-size: 20px">不在运行中</p>
+                        </a>
+                    </li>
+                </ul>
             </div>
         </div>
     </section>
@@ -187,17 +203,15 @@
 </div>
 
 <!-- JS includes -->
+<script src="../static/js/jquery.magnific-popup.js" th:src="@{/static/js/jquery.magnific-popup.js}"></script>
+<script src="../static/js/jquery.easing.1.3.js" th:src="@{/static/js/jquery.easing.1.3.js}"></script>
+<script src="../static/js/slick.min.js" th:src="@{/static/js/slick.min.js}"></script>
+<script src="../static/js/jquery.collapse.js" th:src="@{/static/js/jquery.collapse.js}"></script>
+<script src="../static/js/bootsnav.js" th:src="@{/static/js/bootsnav.js}"></script>
+<script src="../static/js/classie.js" th:src="@{/static/js/classie.js}"></script>
+<script src="../static/js/plugins.js" th:src="@{/static/js/plugins.js}"></script>
+<script src="../static/js/main.js" th:src="@{/static/js/main.js}"></script>
 
-<script src="http://www.jq22.com/jquery/jquery-1.10.2.js"></script>
-
-<script src="../static/js/jquery.magnific-popup.js" th:href="@{/static/js/jquery.magnific-popup.js}"></script>
-<script src="../static/js/jquery.easing.1.3.js" th:href="@{/static/js/jquery.easing.1.3.js}"></script>
-<script src="../static/js/slick.min.js" th:href="@{/static/js/slick.min.js}"></script>
-<script src="../static/js/jquery.collapse.js" th:href="@{/static/js/jquery.collapse.js}"></script>
-<script src="../static/js/bootsnav.js" th:href="@{/static/js/bootsnav.js}"></script>
-<script src="../static/js/classie.js" th:href="@{/static/js/classie.js}"></script>
-<script src="../static/js/plugins.js" th:href="@{/static/js/plugins.js}"></script>
-<script src="../static/js/main.js" th:href="@{/static/js/main.js}"></script>
 <script>
     (function () {
         // trim polyfill : https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/Trim
@@ -236,26 +250,26 @@
     /*
      *webSocket链接
      */
-    var socket;
-    if (typeof (WebSocket) == "undefined") {
-        console.log("您的浏览器不支持WebSocket");
-    } else {
-        console.log("您的浏览器支持WebSocket");
-        socket = new WebSocket("ws://localhost:8080/websocket");
-
-        //打开事件
-        socket.onopen = function () {
-            console.log("Socket 已打开");
-        };
-
-        //获得消息事件
-        socket.onmessage = function (msg) {
-            // console.log(msg.data);
-            //发现消息进入
-            var q = $(".panel-body");
-            q.text(msg.data + "\n" + q.text());
-        };
-    }
+    // var socket;
+    // if (typeof (WebSocket) == "undefined") {
+    //     console.log("您的浏览器不支持WebSocket");
+    // } else {
+    //     // console.log("您的浏览器支持WebSocket");
+    //     socket = new WebSocket("ws://localhost:8080/weibo-bot/websocket");
+    //
+    //     //打开事件
+    //     socket.onopen = function () {
+    //         // console.log("Socket 已打开");
+    //     };
+    //
+    //     //获得消息事件
+    //     socket.onmessage = function (msg) {
+    //         // console.log(msg.data);
+    //         //发现消息进入
+    //         var q = $(".panel-body");
+    //         q.prepend(msg.data + "\n");
+    //     };
+    // }
 
     function postAccount() {
         var warning = $(".alert-warning");
@@ -272,8 +286,8 @@
             $.post(
                 "/account",
                 {
-                    username: $("#input-4").val(),
-                    password: $("#input-5").val()
+                    username: $("#input-4").val().trim(),
+                    password: $("#input-5").val().trim()
                 },
                 function (data) {
                     var data1 = jQuery.parseJSON(data);
@@ -313,14 +327,25 @@
     }
 
     function inputCheck() {
-        var username = $("#input-4").val();
-        var password = $("#input-5").val();
+        var username = $("#input-4").val().trim();
+        var password = $("#input-5").val().trim();
         if (username === "" || password === "") {
             return false;
         }
         return true;
     }
 </script>
-
+<style>
+    .section_header {
+        font-size: 160%;
+        padding: 0 1em;
+        width: 60%;
+        font-weight: bold;
+        user-select: none;
+        color: #6a7989;
+        margin-left: auto;
+        margin-right: auto;
+    }
+</style>
 </body>
 </html>
