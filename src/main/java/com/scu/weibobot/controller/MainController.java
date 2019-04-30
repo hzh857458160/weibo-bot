@@ -2,9 +2,9 @@ package com.scu.weibobot.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.scu.weibobot.consts.Consts;
 import com.scu.weibobot.domain.BotInfo;
 import com.scu.weibobot.domain.WeiboAccount;
-import com.scu.weibobot.consts.Consts;
 import com.scu.weibobot.domain.pojo.NickNameAndImgSrc;
 import com.scu.weibobot.domain.pojo.WeiboUser;
 import com.scu.weibobot.service.BotInfoService;
@@ -28,8 +28,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * ClassName: MainController
@@ -149,9 +151,13 @@ public class MainController {
         response.setContentType("application/json;charset=UTF-8");
         response.setHeader("Access-Control-Allow-Origin", "*");
         JSONObject result = new JSONObject();
-        result.put("code", "0");
-        result.put("msg", "成功添加账号");
-        result.put("attach", "15");
+//        result.put("code", "0");
+//        result.put("msg", "成功添加账号");
+//        result.put("attach", "15");
+//        result.put("code", "10");
+//        result.put("msg", "账号密码有误，请确认后重试");
+        result.put("code", "11");
+        result.put("msg", "未知错误");
         PrintWriter out = response.getWriter();
         out.print(result);
         out.flush();

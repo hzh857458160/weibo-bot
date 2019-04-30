@@ -19,11 +19,6 @@
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <optional>true</optional>
-        </dependency>
         <!-- apache httpclient组件 -->
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>

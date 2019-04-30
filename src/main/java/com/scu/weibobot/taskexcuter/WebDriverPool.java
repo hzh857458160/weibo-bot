@@ -24,9 +24,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Component
 public class WebDriverPool {
 
-//    private static String DRIVER_PROPERTY = "webdriver.chrome.driver";
-//    private static String CHROME_DRIVER_PATH = "D:\\chrome-test\\Chrome-bin\\chromedriver.exe";
-
     private static int CAPACITY = 3;
     private static AtomicInteger refCount = new AtomicInteger(0);
     private static Semaphore botSemaphore = new Semaphore(CAPACITY);

@@ -49,8 +49,9 @@ public class WebSocketServer {
      * 连接关闭调用的方法
      */
     @OnClose
-    public void onClose() {
+    public void onClose(Session session) {
         log.info("有连接关闭！");
+
     }
 
 
