@@ -16,8 +16,8 @@ public class Consts {
 
     public static final String[] INTERESTS_GIRL = {"瑜伽", "烘焙", "舞蹈", "明星", "美妆"};
     public static final String[] INTERESTS_NEUTRAL = {"唱歌", "生活", "搞笑", "经济", "艺术", "阅读", "美食",
-            "动漫", "摄影", "历史", "文化", "旅行", "金融", "游戏", "健康", "设计", "自然", "法律", "电影",
-            "音乐", "综艺", "小说", "投资", "小说", "电视剧", "综艺", "家居"};
+            "动漫", "摄影", "文化", "旅行", "金融", "游戏", "健康", "设计", "自然", "法律", "电影",
+            "音乐", "综艺", "小说", "投资", "电视剧", "综艺", "家居"};
     public static final String[] INTERESTS_BOY = { "运动", "互联网", "足球", "汽车", "篮球", "电脑", "体育",
             "科学", "美女", "手机", "耳机", "下棋", "魔术", "搏击", "滑板", "嘻哈", "绘画"};
 
@@ -25,13 +25,13 @@ public class Consts {
             "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "-", "_", "1",
             "2", "3", "4", "5", "6", "7", "8", "9", "0"};
 
-//    private static final String MOBILE_USER_AGENT = "user-agent = 'Mozilla/5.0 (Linux; U; Android 8.1.0; zh-CN; " +
+//    public static final String MOBILE_USER_AGENT = "user-agent = 'Mozilla/5.0 (Linux; U; Android 8.1.0; zh-CN; " +
 //            "BLA-AL00 Build/HUAWEIBLA-AL00) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/57.0.2987.108 " +
 //            "UCBrowser/11.9.4.974 UWS/2.13.1.48 Mobile Safari/537.36 AliApp(DingTalk/4.5.11) " +
 //            "com.alibaba.android.rimet/10487439 Channel/227200 language/zh-CN'";
 
     //每到整点会运行
-    public static final String RUN_PER_HOUR_CRON = " 0 59 * * *  ?";
+    public static final String RUN_PER_HOUR_CRON = " 0 30 * * *  ?";
 
     //不同使用度之间的时间点数
     public static final int[] VERY_HIGH_ACTIVE_TIME = {12, 13, 14, 19, 20, 21, 22, 23};

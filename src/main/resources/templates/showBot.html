@@ -2,7 +2,7 @@
 <html class="no-js" lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>机器人信息</title>
+    <title>机器人信息及运行状态</title>
 
     <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
     <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
@@ -12,51 +12,189 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.min.js"
             integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
             crossorigin="anonymous"></script>
+    <link rel="stylesheet" type="text/css" href="../static/css/bot-info.css" th:href="@{/static/css/bot-info.css}">
+    <link rel="stylesheet" type="text/css" href="../static/css/list.css" th:href="@{/static/css/list.css}"/>
 </head>
-<body>
-<div class="jumbotron">
-    <div class="container">
-        <div>
-            <img src="#" th:src="${bot.imgSrc}" class="headimg" style="margin: 0 auto;" alt=""/>
-            <span th:text="${bot.nickName}" style="font-size: 30px">NickName</span>
+<body bgcolor="#f9f7f6">
+<div class="wrapper style1 first">
+    <article class="container" id="top">
+        <div class="row">
+            <div class="4u">
+                <span class="image fit"><img th:src="${bot.imgSrc}" src="" alt=""/></span>
+                <h1 th:text="${bot.nickName}"></h1>
+            </div>
+            <div class="8u">
+                <p th:if="${bot.gender == 0}" th:text="'性别：男'"></p>
+                <p th:if="${bot.gender == 1}" th:text="'性别：女'"></p>
+                <p th:text="'兴趣爱好：' + ${bot.interests}"></p>
+                <p th:text="'所在地：' + ${bot.location}"></p>
+                <p th:text="'出生日期：' + ${bot.birthDate}"></p>
+                <p th:text="'机器人等级：' + ${bot.botLevel}"></p>
+                <p th:if="${bot.status == 0}" th:text="'运行状态：运行中'"></p>
+                <p th:if="${bot.status == 1}" th:text="'运行状态：休眠中'"></p>
+                <p th:if="${bot.status == 2}" th:text="'运行状态：暂停中'"></p>
+                <p id="botId" th:text="${bot.botId}" style="display: none"></p>
+                <a href="#" onclick="getSubscribeList()" class="button big scrolly" data-toggle="modal"
+                   data-target="#myModal">查看关注列表</a>
+                <a id="pauseBtn" onclick="parseWeiboBot()" href="javascript:void(0);"
+                   class="button big scrolly">暂停机器人运行</a>
+                <p id="pauseTip"></p>
+            </div>
         </div>
-    </div>
-
+    </article>
 </div>
-<div class="container">
-    <ul class="nav nav-pills">
-        <li role="presentation" class="active"><a href="#botInfo" data-toggle="tab" style="font-size: 25px">机器人资料</a>
-        </li>
-        <li role="presentation"><a href="#runningState" data-toggle="tab" style="font-size: 25px">机器人运行状态</a></li>
-    </ul>
-    <br/>
-    <br/>
-    <div id="myTabContent" class="tab-content">
-        <div class="tab-pane fade in active" id="botInfo">
-            <ul class="list-group">
-                <li class="list-group-item" th:text="'性别：' + ${bot.gender}">性别：男</li>
-                <li class="list-group-item" th:text="'兴趣爱好：' + ${bot.interests}">兴趣爱好：</li>
-                <li class="list-group-item" th:text="'所在地：' + ${bot.location}">所在地：</li>
-                <li class="list-group-item" th:text="'出生日期：' + ${bot.birthDate}">出生日期：</li>
-                <li class="list-group-item" th:text="'机器人等级：' + ${bot.botLevel}">机器人等级：</li>
-                <li class="list-group-item" th:text="'是否启用：' + ${bot.enable}">是否启用：</li>
-            </ul>
-        </div>
-        <div class="tab-pane fade" id="runningState">
-            <div class="panel panel-default">
-                <div class="panel-body">
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>
+                </button>
+                <h3 class="modal-title" id="myModalLabel">社交机器人关注列表</h3>
+            </div>
+            <div class="modal-body">
+                <div class="list-container" style="overflow: auto;">
+                    <ul id="subscribeList" class="bot-list">
+                        正在获取，请稍等...
+                    </ul>
                 </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
             </div>
         </div>
     </div>
 </div>
-</body>
-<style>
-    .panel-body {
-        height: 1200px;
-        overflow: hidden;
-        white-space: pre;
-        font-size: 25px;
+
+<div class="wrapper style2">
+    <div class="container">
+        <h2 style="text-align: center">机器人运行状态</h2>
+        <div class="panel panel-default">
+            <div class="panel-body">
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    /*
+     *webSocket链接
+     */
+    var socket;
+    if (typeof (WebSocket) == "undefined") {
+        console.log("您的浏览器不支持WebSocket");
+    } else {
+        socket = new WebSocket("ws://localhost:8080/weibo-bot/websocket");
+        //打开事件
+        socket.onopen = function () {
+            socket.send($("#botId").text());
+        };
+        //获得消息事件
+        socket.onmessage = function (event) {
+            //发现消息进入
+            console.log(event.data);
+            var jsonData = eval("(" + event.data + ")");
+            console.log(jsonData);
+            var q = $(".panel-body");
+            var text = "<p class='panel-text'>" + jsonData.msg + ":</p>";
+            if (jsonData.attach !== "") {
+                text = text + "<img class='panel-img' alt='' src=\"/weibo-bot/static/img/screenshots/" + jsonData.attach + "\"/>";
+            }
+            q.prepend(text + "\n");
+        };
     }
+
+    function parseWeiboBot() {
+        $.post(
+            "/weibo-bot/pause/",
+            {
+                "botId": $("#botId").text()
+            },
+            function () {
+                var text = $("#pauseBtn").text();
+                if (text === "暂停机器人运行") {
+                    $("#pauseTip").text("暂停成功！");
+                    $("#pauseBtn").text("恢复机器人运行");
+                } else {
+                    $("#pauseTip").text("恢复成功！");
+                    $("#pauseBtn").text("暂停机器人运行");
+                }
+            },
+            "json"
+        );
+    }
+
+    function getSubscribeList() {
+        $.get(
+            "/weibo-bot/subscribe/",
+            {
+                "botId": $("#botId").text()
+            },
+            function (data) {
+                console.log(data);
+                var listContainer = $(".list-container");
+                if (data.code === "0") {
+                    listContainer.text("");
+                    var list = eval("(" + data.msg + ")");
+                    setSubscribeList(list);
+                } else {
+                    listContainer.text(jsonData.msg);
+                }
+            },
+            "json"
+        );
+    }
+
+    function setSubscribeList(list) {
+        var botList = $("#subscribeList");
+        for (var i in list) {
+            var text = "<li><img src=\"" + list[i].headImg
+                + "\"  class=\"thumbnail headimg\" style=\"margin: 0 auto; width: 65%\" alt=\"\"/>"
+                + "<br/>"
+                + "<h5>" + list[i].nickName + "</h5>\n"
+                + "<p>" + list[i].intro + "</p></li>";
+            botList.append(text);
+        }
+    }
+
+    function test() {
+        // var data = "[{\"headImg\":\"https://tvax1.sinaimg.cn/crop.13.5.285.285.180/81f059d6ly8fo8yvj6u7wj208c08c0ug.jpg\",\"intro\":\"知名职场博主 头条文章作者\",\"nickName\":\"创业微头条\"},{\"headImg\":\"https://tva4.sinaimg.cn/crop.0.0.180.180.180/53739f0fjw1e8qgp5bmzyj2050050aa8.jpg\",\"intro\":\"麦刚 中国著名的天使投资人\",\"nickName\":\"创业工场VenturesLab\"},{\"headImg\":\"https://tva3.sinaimg.cn/crop.2.0.2033.2033.180/4c34d9cdjw1e7iqhbue54j21kw1kwtjb.jpg\",\"intro\":\"如果创业是一种修行，@创业家智库 愿与你同修！\",\"nickName\":\"创业家智库\"},{\"headImg\":\"https://tva1.sinaimg.cn/crop.0.0.180.180.180/c5d08662jw1e8qgp5bmzyj2050050aa8.jpg\",\"intro\":\"专注互联网创业类 自媒体\",\"nickName\":\"互联网创业刊\"},{\"headImg\":\"https://tva4.sinaimg.cn/crop.0.0.180.180.180/8aaac866jw1e8qgp5bmzyj2050050aa8.jpg\",\"intro\":\"剖析犹太人法则，一起学习犹太人的创业思维和商业法则! ~ 合作联系QQ：2313678721\",\"nickName\":\"犹太人魔鬼创业\"},{\"headImg\":\"https://tvax4.sinaimg.cn/crop.0.0.640.640.180/7d1943e4ly8finzrso2qrj20hs0hs0u5.jpg\",\"intro\":\"创业最前线官方微博\",\"nickName\":\"创业最前线\"},{\"headImg\":\"https://tvax1.sinaimg.cn/crop.0.4.876.876.180/98b38dafly8g1vbqzokkdj20oh0oh3z9.jpg\",\"intro\":\"知名文学博主官方账号\",\"nickName\":\"小说推荐库\"},{\"headImg\":\"https://tvax1.sinaimg.cn/crop.13.0.573.573.180/61e64a12ly8fnhkwpa2hlj20go0go74l.jpg\",\"intro\":\"北京创业未来传媒技术有限公司\",\"nickName\":\"创业家传媒\"},{\"headImg\":\"https://tva3.sinaimg.cn/crop.0.0.1241.1241.180/94b5b232jw8f654w71132j20yi0yhq55.jpg\",\"intro\":\"微博知名体育帐号 知名体育博主 微博签约自媒体\",\"nickName\":\"篮球技巧教学\"},{\"headImg\":\"https://tvax4.sinaimg.cn/crop.288.0.720.720.180/8c89acbfly8fhcb4rlietj20zk0k0kg1.jpg\",\"intro\":\"篮球教学论坛www.zjlanqiu.com官方微博\",\"nickName\":\"篮球教学论坛\"},{\"headImg\":\"https://tva4.sinaimg.cn/crop.0.0.400.400.180/a9395713jw8ey3rlxfh7sj20b40b4wey.jpg\",\"intro\":\"微博赛事篮球官方账号\",\"nickName\":\"微博篮球\"},{\"headImg\":\"https://tvax4.sinaimg.cn/crop.0.0.500.500.180/5dde0a3cly8fm1et4it4jj20dw0dwwgj.jpg\",\"intro\":\"李宁篮球官方微博\",\"nickName\":\"李宁篮球\"},{\"headImg\":\"https://tva2.sinaimg.cn/crop.0.0.180.180.180/abc58fb0jw1e8qgp5bmzyj2050050aa8.jpg\",\"intro\":\"飞人篮球鞋网（www.jumpmen.cn）官方微博\",\"nickName\":\"飞人篮球鞋网\"},{\"headImg\":\"https://tvax2.sinaimg.cn/crop.0.0.512.512.180/90f58663ly8fgewyvhgu0j20e80e8dfv.jpg\",\"intro\":\"知名体育博主 微博签约自媒体\",\"nickName\":\"篮球大图\"},{\"headImg\":\"https://tva3.sinaimg.cn/crop.0.0.750.750.180/006Dixbujw8fah3hjwkg5j30ku0kut9i.jpg\",\"intro\":\"打球的渴望让我分分钟都不想停下来\",\"nickName\":\"篮球\"},{\"headImg\":\"https://tva4.sinaimg.cn/crop.0.0.180.180.180/6a5df193jw1e8qgp5bmzyj2050050aa8.jpg\",\"intro\":\"：-用鱤覺紶‵;嶺珸━īлg⒈種緈諨゛!\",\"nickName\":\"籃毬\"},{\"headImg\":\"https://tvax1.sinaimg.cn/crop.0.0.1002.1002.180/67972e52ly8fye19hh2icj20ru0rut9s.jpg\",\"intro\":\"体育视频自媒体\",\"nickName\":\"中国篮球\"},{\"headImg\":\"https://tvax4.sinaimg.cn/crop.0.0.798.798.180/61e36371gy1fi7oczmdymj20m80m83yx.jpg\",\"intro\":\"虎扑篮球网官方微博 nba.hupu.com\",\"nickName\":\"虎扑篮球\"}]";
+        var data = "[{\"headImg\":\"https://tvax4.sinaimg.cn/crop.0.0.512.512.180/7d4fcd71ly8frk76k417mj20e80e874j.jpg\",\"intro\":\"知名运动博主\",\"nickName\":\"瑜伽\"},{\"headImg\":\"https://tvax4.sinaimg.cn/crop.0.0.1080.1080.180/a79d1ba8ly8g16r4tb3zxj20u00u03z5.jpg\",\"intro\":\"每日瑜伽DailyYoga官方微博\",\"nickName\":\"每日瑜伽DailyYoga\"},{\"headImg\":\"https://tvax1.sinaimg.cn/crop.0.0.512.512.180/006xJrdYly8fo7ujjx9k0j30e80e8t90.jpg\",\"intro\":\"omma瑜伽 创始人\",\"nickName\":\"Tiffany的瑜伽世界\"},{\"headImg\":\"https://tvax4.sinaimg.cn/crop.32.31.323.323.180/760af92dly8ft09ghxzfsj20au0augox.jpg\",\"intro\":\"微博知名健身帐号\",\"nickName\":\"塑身瑜伽\"},{\"headImg\":\"https://tva4.sinaimg.cn/crop.0.0.180.180.180/bf5ff06djw1e8qgp5bmzyj2050050aa8.jpg\",\"intro\":\"育儿视频自媒体 微博签约自媒体\",\"nickName\":\"花与兽孕妇瑜伽\"},{\"headImg\":\"https://tvax3.sinaimg.cn/crop.0.0.821.821.180/005HsOw3ly8frvipriqnxj30mt0mtaah.jpg\",\"intro\":\"知名运动博主 微博vlog博主\",\"nickName\":\"瑜伽小队长\"},{\"headImg\":\"https://tva3.sinaimg.cn/crop.46.417.953.953.180/006CjOb2jw8f9nc0xj4m2j30se16lth9.jpg\",\"intro\":\"运动健身博主 瑜伽乐园创始人 瑜伽导师 知名运动博主 微博故事红人 健康视频自媒体\",\"nickName\":\"Rosie的瑜伽乐园\"},{\"headImg\":\"https://tva3.sinaimg.cn/crop.129.0.1290.1290.180/7d3a323bjw8fazqvm9rt9j215o0zu49i.jpg\",\"intro\":\"蕙兰瑜伽官方微博\",\"nickName\":\"蕙兰瑜伽\"},{\"headImg\":\"https://tvax2.sinaimg.cn/crop.73.0.559.559.180/006WH6x1ly8fr6egsnlxxj30m80fjmy2.jpg\",\"intro\":\"知名综艺博主\",\"nickName\":\"瑜伽于老师\"},{\"headImg\":\"https://tva2.sinaimg.cn/crop.0.0.180.180.180/b7cd32eajw8f60ge9hjiwj2050050t8s.jpg\",\"intro\":\"微博瑜伽官方账号\",\"nickName\":\"微博瑜伽\"},{\"headImg\":\"https://tva4.sinaimg.cn/crop.1.0.710.710.180/713b5d9djw8f4mj5pwjv9j20js0jsgml.jpg\",\"intro\":\"瑜伽网yujia.com官方微博\",\"nickName\":\"瑜伽网\"},{\"headImg\":\"https://tvax1.sinaimg.cn/crop.0.0.512.512.180/77deba5aly8fz0pzkmmiuj20e80e8glt.jpg\",\"intro\":\"黄露慧 TVBS《女人我最大》最受欢迎的美女瑜伽 LULU老师\",\"nickName\":\"瑜伽天后Lulu老师\"},{\"headImg\":\"https://tvax3.sinaimg.cn/crop.23.0.647.647.180/006ASU5Ply8g2ijcejr95j30j60j6dh5.jpg\",\"intro\":\"微博运动视频帐号 知名运动博主\",\"nickName\":\"瑜伽酱紫做\"},{\"headImg\":\"https://tvax3.sinaimg.cn/crop.0.0.1125.1125.180/006hYwKKly8fvva1r963gj30v90v9q4i.jpg\",\"intro\":\"知名运动博主 运动视频自媒体\",\"nickName\":\"环球瑜伽\"},{\"headImg\":\"https://tva1.sinaimg.cn/crop.0.0.180.180.180/47598e5ajw1e8qgp5bmzyj2050050aa8.jpg\",\"intro\":\"悠季瑜伽 (中国）创办人 《瑜伽文摘》出版人 前《ELLE》主编\",\"nickName\":\"悠季瑜伽-尹岩\"},{\"headImg\":\"https://tvax1.sinaimg.cn/crop.64.81.560.560.180/006KBm6Qly8fe3ootl765j30j60jxweo.jpg\",\"intro\":\"运动视频自媒体\",\"nickName\":\"每天一堂瑜伽课\"},{\"headImg\":\"https://tva2.sinaimg.cn/crop.29.483.813.813.180/006xr9wnjw1f6ncgnm2o5j30p011n10h.jpg\",\"intro\":\"微博运动视频自媒体\",\"nickName\":\"瑜伽视频集\"},{\"headImg\":\"https://tva3.sinaimg.cn/crop.0.0.255.255.180/71b94be9jw1eqnvq1p0cuj2074074mxc.jpg\",\"intro\":\"北京光线传媒股份有限公司\",\"nickName\":\"瑜伽365官微\"},{\"headImg\":\"https://tva1.sinaimg.cn/crop.0.0.180.180.180/716a5e93jw1e8qgp5bmzyj2050050aa8.jpg\",\"intro\":\"知名运动博主\",\"nickName\":\"热门舞蹈瑜伽\"},{\"headImg\":\"https://tva4.sinaimg.cn/crop.0.0.180.180.180/6b373c3bjw1e8qgp5bmzyj2050050aa8.jpg\",\"intro\":\"禅悦瑜伽官方微博\",\"nickName\":\"禅悦瑜伽官方微博\"},{\"headImg\":\"https://tvax4.sinaimg.cn/crop.0.0.500.500.180/962ed906ly1g0dwjik2fpj20dw0dwgmd.jpg\",\"intro\":\"艾扬格瑜伽学院官方微博\",\"nickName\":\"艾扬格瑜伽学院\"},{\"headImg\":\"https://tva4.sinaimg.cn/crop.160.163.490.490.180/77be07bdjw1f9mmnaufqbj20mk0mpgoo.jpg\",\"intro\":\"音乐人 头条文章作者\",\"nickName\":\"阿斯汤加瑜伽之路\"},{\"headImg\":\"https://tva4.sinaimg.cn/crop.361.1.614.614.180/6b5547bdjw1f2wj2z6oo5j20sg0iwdjt.jpg\",\"intro\":\"对女权历史现状没有了解，对社会结构下性别压迫一无所知的人请不要关注我，因为我这种人看太多蠢而不自知的奴才容易对这个世界绝望。\",\"nickName\":\"W瑜伽无人领取\"},{\"headImg\":\"https://tva4.sinaimg.cn/crop.0.0.640.640.180/40bd618ejw8eiqqqgtg6ij20hs0hsjse.jpg\",\"intro\":\"运动博主 头条文章作者\",\"nickName\":\"瑜伽客\"},{\"headImg\":\"https://tva1.sinaimg.cn/crop.0.0.1242.1242.180/005HiThKjw8esgejy1wcmj30yi0yimz0.jpg\",\"intro\":\"知名运动博主\",\"nickName\":\"乌仁Uran艾扬格瑜伽学与练\"},{\"headImg\":\"https://tvax4.sinaimg.cn/crop.0.0.1080.1080.180/006TwWB7ly8fz1cyfdn9rj30u00u0ad4.jpg\",\"intro\":\"微博综艺官方视频账号\",\"nickName\":\"正经综艺片场\"},{\"headImg\":\"https://tva1.sinaimg.cn/crop.20.10.180.180.180/6ff51fefjw1ev7n67i245j206205lglv.jpg\",\"intro\":\"新浪综艺官方微博\",\"nickName\":\"新浪综艺\"},{\"headImg\":\"https://tvax2.sinaimg.cn/crop.0.0.1080.1080.180/7dced06cly8fy5l62msiyj20u00u0abc.jpg\",\"intro\":\"微博综艺官方微博\",\"nickName\":\"微博综艺\"},{\"headImg\":\"https://tvax3.sinaimg.cn/crop.3.1.193.193.180/0076EdGgly8fwvaj95ngdj305k05f749.jpg\",\"intro\":\"微博电视团成员 微博综艺评论人 知名综艺博主 娱乐综艺视频自媒体\",\"nickName\":\"热播综艺\"},{\"headImg\":\"https://tva3.sinaimg.cn/crop.0.0.750.750.180/83bc7e05jw8faw9z1u4uzj20ku0ku40e.jpg\",\"intro\":\"中央电视台综艺频道官方微博\",\"nickName\":\"央视综艺\"},{\"headImg\":\"https://tva1.sinaimg.cn/crop.23.22.140.140.180/006AlDhgjw8f9kkdj15c7j3050050q31.jpg\",\"intro\":\"微博微综艺 官方微博\",\"nickName\":\"微综艺\"},{\"headImg\":\"https://tvax3.sinaimg.cn/crop.0.0.500.500.180/0070ymRAly8g03ltmxzo2j30dw0dwmxk.jpg\",\"intro\":\"娱乐综艺视频自媒体\",\"nickName\":\"综艺喜剧大全\"},{\"headImg\":\"https://tvax2.sinaimg.cn/crop.0.0.700.700.180/0076Foxfly8fqpxkcmf93j30jg0jg3zn.jpg\",\"intro\":\"知名综艺博主 头条文章作者\",\"nickName\":\"综艺吐槽社\"},{\"headImg\":\"https://tvax2.sinaimg.cn/crop.0.0.200.200.180/0076t3YVly8fvoapwvlagj305k05kgli.jpg\",\"intro\":\"知名综艺博主\",\"nickName\":\"芒果娱乐综艺\"},{\"headImg\":\"https://tvax2.sinaimg.cn/crop.0.0.400.400.180/007dKV7Kly8fwda9crwm1j30b40b4t92.jpg\",\"intro\":\"知名综艺博主 娱乐综艺视频自媒体\",\"nickName\":\"综艺大曝料\"},{\"headImg\":\"https://tvax3.sinaimg.cn/crop.35.10.199.199.180/0076Eercly8fplggrut36j308c05v749.jpg\",\"intro\":\"微博电视团成员 娱乐综艺视频自媒体\",\"nickName\":\"综艺扒姨太\"},{\"headImg\":\"https://tvax3.sinaimg.cn/crop.0.0.996.996.180/0076Fp57ly8g0gqnljbvpj30ro0rojuk.jpg\",\"intro\":\"知名综艺博主\",\"nickName\":\"热门综艺榜\"},{\"headImg\":\"https://tvax3.sinaimg.cn/crop.0.25.430.430.180/007bn4CDly8g0hcwf9gcyj30by0g63zh.jpg\",\"intro\":\"知名综艺博主 娱乐综艺视频自媒体\",\"nickName\":\"综艺八哥\"},{\"headImg\":\"https://tvax1.sinaimg.cn/crop.0.0.1242.1242.180/007bnd3lly8fsjuwvsg99j30yi0yidij.jpg\",\"intro\":\"知名综艺博主 娱乐综艺视频自媒体\",\"nickName\":\"热播综艺君\"},{\"headImg\":\"https://tvax1.sinaimg.cn/crop.78.77.502.502.180/00705vsely8fmbu9gmoq6j30hs0p4mxl.jpg\",\"intro\":\"娱乐综艺视频自媒体\",\"nickName\":\"热门综艺大推荐\"},{\"headImg\":\"https://tvax2.sinaimg.cn/crop.26.3.305.305.180/8338b336gy1fucjer1q5pj209s09vjs3.jpg\",\"intro\":\"知名娱乐博主\",\"nickName\":\"综艺娱乐来了\"},{\"headImg\":\"https://tvax4.sinaimg.cn/crop.0.0.512.512.180/00705vu4ly8fnf1hrcjy9j30e80e8dha.jpg\",\"intro\":\"娱乐综艺视频自媒体\",\"nickName\":\"恶搞综艺\"},{\"headImg\":\"https://tvax4.sinaimg.cn/crop.0.0.995.995.180/0075ItPhly8ft2wbeb69kj30sg0s4wft.jpg\",\"intro\":\"知名电视剧博主\",\"nickName\":\"连环综艺秀\"},{\"headImg\":\"https://tvax3.sinaimg.cn/crop.0.0.400.400.180/007blx7ily8fw30h66z83j30b40b4t9g.jpg\",\"intro\":\"知名综艺博主 娱乐综艺视频自媒体\",\"nickName\":\"综艺扒姐\"},{\"headImg\":\"https://tvax4.sinaimg.cn/crop.0.1.234.234.180/007bn4B4ly8fwury5y2tqj306k06kjrd.jpg\",\"intro\":\"知名综艺博主\",\"nickName\":\"综艺吐槽酱\"},{\"headImg\":\"https://tvax4.sinaimg.cn/crop.0.0.888.888.180/0071HoiSly8fuwrh9bllij30oo0oo402.jpg\",\"intro\":\"知名综艺博主\",\"nickName\":\"暴躁的综艺仔\"},{\"headImg\":\"https://tvax1.sinaimg.cn/crop.70.133.286.286.180/0076EcPIly8fy8ck3jgrrj30ec0br0tq.jpg\",\"intro\":\"知名综艺博主 头条文章作者\",\"nickName\":\"娱乐综艺集锦\"},{\"headImg\":\"https://tvax1.sinaimg.cn/crop.0.0.200.200.180/007blxg5ly8fy8ems1r0dj305k05kdfq.jpg\",\"intro\":\"娱乐综艺视频自媒体\",\"nickName\":\"综艺团\"},{\"headImg\":\"https://tvax4.sinaimg.cn/crop.0.0.1080.1080.180/006AU3zzly8fz732wnb9yj30u00u0go6.jpg\",\"intro\":\"知名综艺博主 微博娱乐综艺视频帐号\",\"nickName\":\"日韩综艺汇\"},{\"headImg\":\"https://tvax3.sinaimg.cn/crop.31.1.806.806.180/0075HvUfly8ft2w0kt7eaj30sg0nyjss.jpg\",\"intro\":\"知名电视剧博主\",\"nickName\":\"综艺连环秀\"},{\"headImg\":\"https://tva1.sinaimg.cn/crop.0.0.180.180.180/65634699jw1e8qgp5bmzyj2050050aa8.jpg\",\"intro\":\"新浪家居官方微博\",\"nickName\":\"新浪家居\"},{\"headImg\":\"https://tva4.sinaimg.cn/crop.0.0.179.179.180/6a705ea8tw1e6vjxyz1jsj2050050mx7.jpg\",\"intro\":\"宜家家居IKEA\",\"nickName\":\"宜家家居IKEA\"},{\"headImg\":\"https://tvax2.sinaimg.cn/crop.0.0.300.300.180/0061REnPly8fw0mczzg2sj308c08cwel.jpg\",\"intro\":\"微博家居官方微博\",\"nickName\":\"微博家居\"},{\"headImg\":\"https://tva3.sinaimg.cn/crop.426.45.568.568.180/9c819600jw8epzibd5oogj20sg0h20t8.jpg\",\"intro\":\"知名房产博主\",\"nickName\":\"热家居\"},{\"headImg\":\"https://tva4.sinaimg.cn/crop.0.0.180.180.180/6ec3b446jw1e8qgp5bmzyj2050050aa8.jpg\",\"intro\":\"微博知名家居帐号 视频自媒体\",\"nickName\":\"环球时尚家居\"},{\"headImg\":\"https://tvax2.sinaimg.cn/crop.0.0.400.400.180/710c6832ly8fukj9dlrg2j20b40b4dgh.jpg\",\"intro\":\"土巴兔装修网官方微博\",\"nickName\":\"土巴兔装修家居\"},{\"headImg\":\"https://tva3.sinaimg.cn/crop.0.0.180.180.180/84fe43edjw1e8qgp5bmzyj2050050aa8.jpg\",\"intro\":\"知名设计美学博主\",\"nickName\":\"全球家居汇\"},{\"headImg\":\"https://tva4.sinaimg.cn/crop.0.0.180.180.180/9dc7402fjw1e8qgp5bmzyj2050050aa8.jpg\",\"intro\":\"微博知名家居帐号\",\"nickName\":\"顶尖创意家居\"},{\"headImg\":\"https://tvax4.sinaimg.cn/crop.0.0.980.980.180/e950c1d7ly8fdgntkbqspj20rs0tw0xy.jpg\",\"intro\":\"知名家居博主\",\"nickName\":\"DIY设计家居菌\"},{\"headImg\":\"https://tva4.sinaimg.cn/crop.0.0.180.180.180/7a110488jw1e8qgp5bmzyj2050050aa8.jpg\",\"intro\":\"知名家居博主\",\"nickName\":\"全球顶尖创意家居\"},{\"headImg\":\"https://tva1.sinaimg.cn/crop.0.0.180.180.180/64181e08jw1e8qgp5bmzyj2050050aa8.jpg\",\"intro\":\"知名家居博主\",\"nickName\":\"创意家居装修设计\"},{\"headImg\":\"https://tvax1.sinaimg.cn/crop.0.0.720.720.180/81924fe4ly8fmitkn1yd3j20k00k0ab4.jpg\",\"intro\":\"知名家居博主\",\"nickName\":\"家居设计师coco\"},{\"headImg\":\"https://tva2.sinaimg.cn/crop.0.0.179.179.180/e9a18ad3gw1epr975n91aj2050050jrj.jpg\",\"intro\":\"微博2018十大影响力家居大V 知名家居博主\",\"nickName\":\"热家居集\"},{\"headImg\":\"https://tva3.sinaimg.cn/crop.0.0.180.180.180/a1ca18c6jw1e8qgp5bmzyj2050050aa8.jpg\",\"intro\":\"知名房产博主\",\"nickName\":\"家居丶时尚\"},{\"headImg\":\"https://tva2.sinaimg.cn/crop.0.0.180.180.180/6bb6e8f1jw1e8qgp5bmzyj2050050aa8.jpg\",\"intro\":\"知名家居博主\",\"nickName\":\"寰球家居\"},{\"headImg\":\"https://tva4.sinaimg.cn/crop.164.164.1780.1780.180/8daebe48jw8f2t0iwzzl9j21kw1kwn1i.jpg\",\"intro\":\"杭州群核信息技术有限公司\",\"nickName\":\"酷家乐家居\"},{\"headImg\":\"https://tvax3.sinaimg.cn/crop.0.0.302.302.180/a7f44668ly8fpk63s7bewj208e08e0sy.jpg\",\"intro\":\"微博2017十大影响力家居博主 微博人气家居设计师超话主持人 知名家居博主\",\"nickName\":\"精装家居设计师\"},{\"headImg\":\"https://tvax1.sinaimg.cn/crop.1.0.98.98.180/7fac6f73ly8flzyoq0ky7j202s02s74k.jpg\",\"intro\":\"知名房产博主\",\"nickName\":\"创意家居配饰师\"},{\"headImg\":\"https://tvax2.sinaimg.cn/crop.40.31.726.726.180/71afc421ly8fyhouo0pi4j20m80m8js8.jpg\",\"intro\":\"NORHOR家居官方微博\",\"nickName\":\"NORHOR家居\"},{\"headImg\":\"https://tvax4.sinaimg.cn/crop.0.0.690.690.180/8c5db297ly8fyffd2dsz5j20j60j6gnl.jpg\",\"intro\":\"微博2018十大影响力家居大V 好物发现官 微博vlog博主 知名家居博主 视频自媒体 微博签约自媒体\",\"nickName\":\"艺术家居\"},{\"headImg\":\"https://tvax3.sinaimg.cn/crop.0.0.1328.1328.180/73803efely8fh1d0o2rn2j210w10wt9d.jpg\",\"intro\":\"厦门松霖家居有限公司\",\"nickName\":\"松霖家居\"},{\"headImg\":\"https://tva4.sinaimg.cn/crop.22.100.444.444.180/eb592241jw8etnbr23y0xj20m80fk78f.jpg\",\"intro\":\"家居达人 知名家居博主\",\"nickName\":\"中式装修家居设计\"}]";
+        var listContainer = $("#subscribeList");
+        listContainer.text("");
+        var list = eval("(" + data + ")");
+        setSubscribeList(list);
+    }
+</script>
+<style>
+    input[type="button"].big, input[type="submit"].big, input[type="reset"].big, .button.big {
+        font-size: 1.5em;
+        letter-spacing: -0.025em;
+    }
+
+    input[type="button"], input[type="submit"], input[type="reset"], .button {
+        padding: 1em 2.35em 1em 2.35em;
+        font-size: 1.1em;
+    }
+
+    input[type="button"], input[type="submit"], input[type="reset"], .button {
+        -webkit-appearance: none;
+        position: relative;
+        display: inline-block;
+        color: #fff !important;
+        text-decoration: none;
+        font-weight: 700;
+        border: 0;
+        outline: 0;
+        cursor: pointer;
+        border-radius: 8px;
+        text-shadow: -1px -1px 0.5px rgba(0, 0, 0, 0.5);
+        overflow: hidden;
+        box-shadow: inset 0px 0px 0px 1px rgba(0, 0, 0, 0.5), inset 0px 2px 1px 0px rgba(255, 255, 255, 0.75);
+        background: #43B3E0;
+    }
+
+
 </style>
+</body>
 </html>

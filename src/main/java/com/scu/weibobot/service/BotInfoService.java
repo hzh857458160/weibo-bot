@@ -39,5 +39,7 @@ public class BotInfoService {
         return botInfoRepository.findById(id);
     }
 
-
+    public void updateStatusByBotId(Long botId, int status) {
+        botInfoRepository.updateStatusByBotId(botId, status);
+    }
 }

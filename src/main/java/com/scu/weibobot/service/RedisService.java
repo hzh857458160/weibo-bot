@@ -2,9 +2,10 @@ package com.scu.weibobot.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -271,11 +272,197 @@ public class RedisService {
     public long setRemove(String key, Object... values) {
         try {
             String actualKey = KEY_PREFIX + key;
-            Long count = redisTemplate.opsForSet().remove(actualKey, values);
-            return count;
+            return redisTemplate.opsForSet().remove(actualKey, values);
         } catch (Exception e) {
             e.printStackTrace();
             return 0;
         }
     }
+
+    public boolean lSet(String key, String value) {
+        try {
+            String actualKey = KEY_PREFIX + key;
+            redisTemplate.opsForList().rightPush(actualKey, value);
+            return true;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean lSet(String key, String value, long time) {
+        try {
+            String actualKey = KEY_PREFIX + key;
+            redisTemplate.opsForList().rightPush(actualKey, value);
+            if (time > 0) {
+                expire(key, time);
+            }
+            return true;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean lSet(String key, List<Object> value) {
+        try {
+            String actualKey = KEY_PREFIX + key;
+            redisTemplate.opsForList().rightPushAll(actualKey, value);
+            return true;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
+    public boolean lSet(String key, List<Object> value, long time) {
+        try {
+            String actualKey = KEY_PREFIX + key;
+            redisTemplate.opsForList().rightPushAll(actualKey, value);
+            if (time > 0) {
+                expire(key, time);
+            }
+            return true;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public List<Object> lGet(String key, long start, long end) {
+        try {
+            String actualKey = KEY_PREFIX + key;
+            return redisTemplate.opsForList().range(actualKey, start, end);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public long lGetListSize(String key) {
+        try {
+            String actualKey = KEY_PREFIX + key;
+            return redisTemplate.opsForList().size(actualKey);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    public Object lGetIndex(String key, long index) {
+        try {
+            String actualKey = KEY_PREFIX + key;
+            return redisTemplate.opsForList().index(actualKey, index);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public boolean lUpdateIndex(String key, long index, Object value) {
+        try {
+            String actualKey = KEY_PREFIX + key;
+            redisTemplate.opsForList().set(actualKey, index, value);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean lRemove(String key, long count, Object value) {
+        try {
+            String actualKey = KEY_PREFIX + key;
+            redisTemplate.opsForList().remove(actualKey, count, value);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // ================================HashMap=================================
+    public Object hGet(String key, String hashKey) {
+        try {
+            String actualKey = KEY_PREFIX + key;
+            return redisTemplate.opsForHash().get(actualKey, hashKey);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public Map<Object, Object> hmGet(String key) {
+        try {
+            String actualKey = KEY_PREFIX + key;
+            return redisTemplate.opsForHash().entries(actualKey);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public boolean hmSet(String key, Map<String, Object> map) {
+        try {
+            String actualKey = KEY_PREFIX + key;
+            redisTemplate.opsForHash().putAll(actualKey, map);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean hmSet(String key, Map<String, Object> map, long time) {
+        try {
+            String actualKey = KEY_PREFIX + key;
+            redisTemplate.opsForHash().putAll(actualKey, map);
+            if (time > 0) {
+                expire(key, time);
+            }
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean hSet(String key, String hashKey, Object value) {
+        try {
+            String actualKey = KEY_PREFIX + key;
+            redisTemplate.opsForHash().put(actualKey, hashKey, value);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public void hDel(String key, Object... hashKey) {
+        try {
+            String actualKey = KEY_PREFIX + key;
+            redisTemplate.opsForHash().delete(actualKey, hashKey);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public boolean hHasKey(String key, String hashKey) {
+        String actualKey = KEY_PREFIX + key;
+        return redisTemplate.opsForHash().hasKey(actualKey, hashKey);
+    }
+
+    public long hmGetSize(String key) {
+        String actualKey = KEY_PREFIX + key;
+        return redisTemplate.opsForHash().size(actualKey);
+    }
+
+
+
+
 }

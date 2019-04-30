@@ -10,6 +10,8 @@ import javax.annotation.PostConstruct;
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * ClassName: WebSocketServer
@@ -22,10 +24,10 @@ import java.io.IOException;
 @Slf4j
 public class WebSocketServer {
 
+    //concurrent包的线程安全Set，用来存放每个客户端对应的MyWebSocket对象。若要实现服务端与单一客户端通信的话，可以使用Map来存放，其中Key可以为用户标识
+    private static Map<String, Session> map = new ConcurrentHashMap<>();
     @Autowired
     private ThreadPoolTaskExecutor taskExecutor;
-    //与某个客户端的连接会话，需要通过它来给客户端发送数据
-    private Session session;
 
     public static WebSocketServer webSocketServer;
 
@@ -40,10 +42,7 @@ public class WebSocketServer {
      */
     @OnOpen
     public void onOpen(Session session) {
-        this.session = session;
         log.info("有新连接加入！");
-        pushLogger();
-
     }
 
     /**
@@ -63,6 +62,8 @@ public class WebSocketServer {
     @OnMessage
     public void onMessage(String message, Session session) {
         log.info("来自客户端的消息:" + message);
+        map.put(message, session);
+        pushLogger(Long.valueOf(message), session);
     }
 
     /**
@@ -81,22 +82,22 @@ public class WebSocketServer {
      * @param message
      * @throws IOException
      */
-    public void sendMessage(String message) throws IOException {
+    public void sendMessage(String message, Session session) throws IOException {
         session.getBasicRemote().sendText(message);
     }
 
     /**
      * 开启线程，不断推送消息到前端
      */
-    private void pushLogger() {
+    private void pushLogger(Long botId, Session session) {
         Runnable runnable = () -> {
             boolean flag = true;
             while (flag) {
                 try {
-                    PushMessage pushMessage = MessageQueue.getInstance().poll();
-                    sendMessage(pushMessage.toString());
-                    Thread.sleep(1000);
-
+                    PushMessage pushMessage = MessageQueue.getInstance().poll(botId);
+                    if (pushMessage != null) {
+                        sendMessage(pushMessage.toJSON(), session);
+                    }
                 } catch (Exception e) {
                     log.warn(e.getMessage());
                     flag = false;

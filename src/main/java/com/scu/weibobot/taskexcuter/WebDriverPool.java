@@ -1,5 +1,6 @@
 package com.scu.weibobot.taskexcuter;
 
+import com.scu.weibobot.consts.Consts;
 import com.scu.weibobot.domain.BotInfo;
 import com.scu.weibobot.domain.pojo.ProxyIp;
 import com.scu.weibobot.service.BotInfoService;
@@ -56,7 +57,7 @@ public class WebDriverPool {
         Map<String, Object> prefs = new HashMap<>();
         prefs.put("profile.default_content_settings.popups", 0);
         prefs.put("profile.default_content_setting_values.notifications", 2); //禁用浏览器弹窗
-        prefs.put("profile.managed_default_content_settings.images", 2); //禁止下载加载图片
+//        prefs.put("profile.managed_default_content_settings.images", 2); //禁止下载加载图片
         // 禁止加载js
         prefs.put("profile.default_content_settings.javascript", 2); // 2就是代表禁止加载的意思
         prefs.put("excludeSwitches", Collections.singletonList("enable-automation"));
@@ -100,7 +101,6 @@ public class WebDriverPool {
     }
 
 
-
     /**
      * 微博账号专用有代理的driver
      * 获取当前map中的driver
@@ -117,7 +117,8 @@ public class WebDriverPool {
      * @return
      */
     public static WebDriver getWebDriver(){
-        return new ChromeDriver(getInitChromeOptions());
+        String temp = null;
+        return getWebDriver(temp);
     }
 
 

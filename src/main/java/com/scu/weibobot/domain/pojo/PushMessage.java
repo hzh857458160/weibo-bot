@@ -20,12 +20,18 @@ public class PushMessage {
     private LocalTime time;
     private BotInfo botInfo;
     private String body;
+    private String attach;
 
     @Override
     public String toString() {
-        //bot1-botname(botLevel) time body in threadName
         return "[" + time + "]" + " " + botInfo.getNickName() + "(bot" +
                 botInfo.getBotId() + " - " + botInfo.getBotLevel() +
                 ") " + body;
     }
+
+    public String toJSON() {
+        return "{\"msg\":\"" + toString() + "\", \"attach\":\"" + attach + "\"}";
+    }
+
+
 }

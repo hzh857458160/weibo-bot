@@ -149,7 +149,9 @@
             <button type="button" class="btn btn-primary" onclick="postAccount()">确认添加</button>
         </div>
         <div class="m-top-80">
-            <div class="alert alert-success alert-dismissible" style="display: none" role="alert">添加账号成功！</div>
+            <div id="successTip" class="alert alert-success alert-dismissible" style="display: none" role="alert">
+                添加账号成功！
+            </div>
             <div class="alert alert-danger alert-dismissible" style="display: none" role="alert">添加账号失败，请稍后重试</div>
             <div class="alert alert-warning alert-dismissible" style="display: none" role="alert"></div>
         </div>
@@ -162,8 +164,8 @@
     <section id="observer">
         <div class="container">
             <div class="content">
-                <div class="section_header">当前社交机器人运行状况</div>
-                <span th:text="'(当前有' + ${activeCount} + '个机器人正在运行)'"></span>
+                <div class="section_header">社交机器人概况</div>
+                <span th:text="'(总共有' + ${allCount} + '个机器人，有' + ${activeCount} + '个正在运行，下次启动时间为' + ${startTime} + ')'"></span>
             </div>
             <div class="list-container">
                 <ul class="bot-list">
@@ -172,9 +174,10 @@
                             <img src="#" th:src="${bot.imgSrc}" class="thumbnail headimg" style="margin: 0 auto;"
                                  alt=""/>
                             <br/>
-                            <h5 th:text="${bot.nickName}">机器人</h5>
-                            <p th:if="${bot.enable}" style="font-size: 20px">运行中</p>
-                            <p th:if="not ${bot.enable}" style="font-size: 20px">不在运行中</p>
+                            <h4 th:text="${bot.nickName}">机器人</h4>
+                            <p th:if="${bot.status == 0}" style="font-size: 17px" th:text="'运行中'"></p>
+                            <p th:if="${bot.status == 1}" style="font-size: 17px" th:text="'休眠中'"></p>
+                            <p th:if="${bot.status == 2}" style="font-size: 17px" th:text="'暂停中'"></p>
                         </a>
                     </li>
                 </ul>
@@ -185,7 +188,7 @@
 
     <!-- scroll up-->
     <div class="scrollup">
-        <a href="#"><i class="fa fa-chevron-up"></i></a>
+        <a href="#"><i class="fa fa-chevron-up"> </i></a>
     </div><!-- End off scroll up -->
 
 
@@ -246,58 +249,30 @@
             }
         }
     })();
-
-    /*
-     *webSocket链接
-     */
-    // var socket;
-    // if (typeof (WebSocket) == "undefined") {
-    //     console.log("您的浏览器不支持WebSocket");
-    // } else {
-    //     // console.log("您的浏览器支持WebSocket");
-    //     socket = new WebSocket("ws://localhost:8080/weibo-bot/websocket");
-    //
-    //     //打开事件
-    //     socket.onopen = function () {
-    //         // console.log("Socket 已打开");
-    //     };
-    //
-    //     //获得消息事件
-    //     socket.onmessage = function (msg) {
-    //         // console.log(msg.data);
-    //         //发现消息进入
-    //         var q = $(".panel-body");
-    //         q.prepend(msg.data + "\n");
-    //     };
-    // }
-
     function postAccount() {
         var warning = $(".alert-warning");
+        var botId;
         if (!inputCheck()) {
             warning.text("(用户名或密码不能为空！)");
             warning.css('display', '');
             return;
         }
         $(".btn.btn-primary").attr("disabled", true);
-        warning.text("(正在添加账号，请稍等...)");
+        warning.text("(正在添加账号，请稍等，这可能需要一段时间...)");
         warning.css('display', '');
         var flag = false;
         try {
             $.post(
-                "/account",
+                "/weibo-bot/test",
                 {
                     username: $("#input-4").val().trim(),
                     password: $("#input-5").val().trim()
                 },
                 function (data) {
-                    var data1 = jQuery.parseJSON(data);
-                    console.log(data1);
-                    console.log('成功收到数据: ' + JSON.stringify(data, null, '  '));
-                    var result = data;
-                    if (result.code === "0") {
+                    console.log(data);
+                    if (data.code === "0") {
                         flag = true;
-                        $("#input-4").val("");
-                        $("#input-5").val("")
+                        botId = data.attach;
                     }
                 },
                 "json"
@@ -305,10 +280,14 @@
         } finally {
             setTimeout(function () {
                 warning.css('display', 'none');
-                $(".alert-warning").text("");
+                warning.text("");
                 $(".btn.btn-primary").attr("disabled", false);
                 if (flag) {
                     showAlert($(".alert.alert-success"));
+                    var text = "<a href=\"/weibo-bot/account?botId=" + botId + "\" target=\"_blank\" >点击此处查看新社交机器人信息</a>"
+                    $("#successTip").append(text);
+                    $("#input-4").val("");
+                    $("#input-5").val("")
                 } else {
                     showAlert($(".alert.alert-danger"));
                 }
@@ -323,7 +302,7 @@
         alert.css('display', '');
         setTimeout(function () {
             alert.css('display', 'none');
-        }, 5000);
+        }, 8000);
     }
 
     function inputCheck() {

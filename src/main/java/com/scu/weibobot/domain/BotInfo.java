@@ -49,8 +49,8 @@ public class BotInfo {
     //预设机器人使用微博程度 N(normal)、H(high)、VH(very high)
     private String botLevel;
 
-    //需求中可以暂停机器人发言，使用该字段来判断，true为可以，false为不可以
-    private boolean enable;
+    //社交机器人的运行状态，0为运行中，1为休眠中，2为暂停中
+    private int status;
 
 
 }

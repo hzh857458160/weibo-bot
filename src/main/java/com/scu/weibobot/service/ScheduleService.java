@@ -40,29 +40,30 @@ public class ScheduleService {
      * 自动使用线程运行社交机器人
      * 频率为一个小时一次
      */
-//    @Scheduled(cron= Consts.RUN_PER_HOUR_CRON)
-//    public void coreJob(){
-//        log.info("进入定时任务coreJob() {}", LocalTime.now());
-//        //获取所有可用的微博机器人账号
-//        List<WeiboAccount> weiboAccountList = accountService.findAllAccount();
-//        //根据账号去寻找对应的资料
-//        for (WeiboAccount account : weiboAccountList){
-//            BotInfo botInfo = botInfoService.findBotInfoByAccountId(account.getAccountId());
-//            if (readyToStart(botInfo)) {
-//                //然后设置好WeiboBotExecuter的属性
-//                WeiboBotExecutor botExecutor = new WeiboBotExecutor();
-//                botExecutor.setBotInfo(botInfo);
-//                botExecutor.setWeiboAccount(account);
-//                //使用线程池调用WeiboBotExecuter的run方法
-//                taskExecutor.execute(botExecutor);
-//                waitSeconds(2);
-//            } else {
-//                log.info("bot{}尚未达到概率", botInfo.getBotId());
-//            }
-//
-//        }
-//
-//    }
+    @Scheduled(cron = Consts.RUN_PER_HOUR_CRON)
+    public void coreJob() {
+        log.info("进入定时任务coreJob() {}", LocalTime.now());
+        //获取所有可用的微博机器人账号
+        List<WeiboAccount> weiboAccountList = accountService.findAllAccount();
+        //根据账号去寻找对应的资料
+        for (WeiboAccount account : weiboAccountList) {
+            BotInfo botInfo = botInfoService.findBotInfoByAccountId(account.getAccountId());
+            if (readyToStart(botInfo)) {
+                //然后设置好WeiboBotExecuter的属性
+                WeiboBotExecutor botExecutor = new WeiboBotExecutor();
+                botExecutor.setBotInfo(botInfo);
+                botExecutor.setWeiboAccount(account);
+                botExecutor.setBotInfoService(botInfoService);
+                //使用线程池调用WeiboBotExecuter的run方法
+                taskExecutor.execute(botExecutor);
+                waitSeconds(2);
+            } else {
+                log.info("bot{}尚未达到概率", botInfo.getBotId());
+            }
+
+        }
+
+    }
 
     /**
      * 判断当前机器人是否达到启动概率
@@ -79,5 +80,6 @@ public class ScheduleService {
         log.info("当前随机数为{}", nowProb);
         return (nowProb / 100) < prob;
     }
+
 
 }

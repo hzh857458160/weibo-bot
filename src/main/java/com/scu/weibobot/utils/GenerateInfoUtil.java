@@ -228,19 +228,18 @@ public class GenerateInfoUtil {
             int ran3 = random.nextInt(commentList.size());
             int ran4 = random.nextInt(commentList.size());
             log.info("获取到第{}个和第{}个评论", ran3, ran4);
-            WebElement specHeadImg = commentList.get(ran3).findElement(By.cssSelector("div.head > a > img"));
             WebElement specNickname = commentList.get(ran4).findElement(By.cssSelector("div.cntwrap > div > div > a"));
-
-            //微博h5版本无法设置头像
-            String imgSrc = specHeadImg.getAttribute("src");
             String nickName = specNickname.getText();
+
+            commentList.get(ran3).findElement(By.cssSelector("div.head > a > img")).click();
+            waitSeconds(2);
+            WebElement specHeadImg = WebDriverUtil.forceGetElement(By.cssSelector("#ava > img"), driver);
+            String imgSrc = specHeadImg.getAttribute("src");
 
             log.info("imgSrc:{}, nickName:{}", imgSrc, nickName);
             return new NickNameAndImgSrc(nickName, imgSrc);
         } finally {
-            if (driver != null) {
-                driver.quit();
-            }
+            WebDriverPool.closeWebDriver(driver);
         }
 
     }
@@ -358,9 +357,7 @@ public class GenerateInfoUtil {
             e.printStackTrace();
 
         } finally {
-            if (driver != null) {
-                driver.quit();
-            }
+            WebDriverPool.closeWebDriver(driver);
 
         }
         return contentSb.toString();

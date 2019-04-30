@@ -1359,3 +1359,25 @@ Footer Section style
     text-decoration: none;
 
 }
+
+.header {
+    background: #00BCD4;
+    color: #fff;
+}
+
+.header .intro {
+    background: #00a5bb;
+    padding-top: 90px;
+    padding-bottom: 60px;
+    position: relative;
+    font-size: 16px;
+}
+
+.header .profile-image {
+    position: absolute;
+    width: 160px;
+    height: 160px;
+    top: -80px;
+    margin-left: -80px;
+}
+

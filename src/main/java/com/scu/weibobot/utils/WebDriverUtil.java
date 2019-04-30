@@ -2,6 +2,7 @@ package com.scu.weibobot.utils;
 
 import com.scu.weibobot.service.RedisService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -9,7 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
@@ -24,11 +28,19 @@ public class WebDriverUtil {
 
     public static WebDriverUtil webDriverUtil;
 
-
     @PostConstruct
     public void init() {
         webDriverUtil = this;
         webDriverUtil.redisService = this.redisService;
+    }
+
+    public static void cacheCurrentIp(String key, String ip) {
+        webDriverUtil.redisService.set(key, ip);
+    }
+
+    public static String getCachedIp(String key) {
+        Object obj = webDriverUtil.redisService.get(key);
+        return obj == null ? null : (String) obj;
     }
 
     public static boolean isCookieExist(String key){
@@ -265,12 +277,50 @@ public class WebDriverUtil {
         return ((JavascriptExecutor)driver).executeScript(js);
     }
 
+    //TODO:将当前截图存入项目目录下，并返回截图地址
+    public static String getScreenShotFileName(WebElement element) throws IOException {
+        WrapsDriver wrapsDriver = (WrapsDriver) element;
+        File screen = ((TakesScreenshot) wrapsDriver.getWrappedDriver()).getScreenshotAs(OutputType.FILE);
+        BufferedImage image = ImageIO.read(screen);
+        //元素坐标
+        Point p = element.getLocation();
+        //获取元素的高度、宽度
+        int width = element.getSize().getWidth();
+        int height = element.getSize().getHeight();
+        Dimension dimension = new Dimension(width, height);
+        //创建一个矩形使用上面的高度，和宽度
+        Rectangle rect = new Rectangle(p, dimension);
+        BufferedImage img = image.getSubimage(p.getX(), p.getY(), rect.width, rect.height);
+        ImageIO.write(img, "png", screen);
+        File tempFile = new File("src\\main\\resources\\static\\img\\screenshots\\" + System.currentTimeMillis() + ".png");
+        FileUtils.copyFile(screen, tempFile);
+        screen.delete();
+        return tempFile.getName();
+    }
 
-//    public void getScreenShot(WebDriver driver) {
-//        if (driver instanceof TakesScreenshot) {
-//            TakesScreenshot screenshotTaker = (TakesScreenshot) driver;
-//            File file = screenshotTaker.getScreenshotAs(OutputType.FILE);
-//        }
-//    }
+    public static String getCommentScreenShot(WebDriver driver) throws IOException {
+        WebElement sourceWeibo = WebDriverUtil.forceGetElement(By.cssSelector("div.card.m-panel.card9.f-weibo"), driver);
+        WebElement selfComment = WebDriverUtil.forceGetElementList(
+                By.cssSelector("div.card.m-avatar-box.lite-page-list"), driver).get(0);
+
+        File screen = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+        BufferedImage image = ImageIO.read(screen);
+        //元素坐标
+        Point pWeibo = sourceWeibo.getLocation();
+        Point pComment = selfComment.getLocation();
+        //获取元素的高度、宽度
+        int width = sourceWeibo.getSize().getWidth();
+        int height = pComment.getY() + selfComment.getSize().getHeight();
+        Dimension dimension = new Dimension(width, height);
+        //创建一个矩形使用上面的高度，和宽度
+        Rectangle rect = new Rectangle(pWeibo, dimension);
+        BufferedImage img = image.getSubimage(pWeibo.getX(), pWeibo.getY(), rect.width, rect.height);
+        ImageIO.write(img, "png", screen);
+        File tempFile = new File("src\\main\\resources\\static\\img\\screenshots\\" + System.currentTimeMillis() + ".png");
+        FileUtils.copyFile(screen, tempFile);
+        screen.delete();
+        return tempFile.getName();
+    }
+
 
 }

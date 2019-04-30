@@ -2,7 +2,9 @@ package com.scu.weibobot.websocket;
 
 import com.scu.weibobot.domain.pojo.PushMessage;
 
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -13,17 +15,19 @@ import java.util.concurrent.LinkedBlockingQueue;
  **/
 public class MessageQueue {
     //队列大小
-    private static final int QUEUE_MAX_SIZE = 10000;
-    private static MessageQueue alarmMessageQueue = new MessageQueue();
-    //阻塞队列
-    private BlockingQueue<PushMessage> blockingQueue = new LinkedBlockingQueue<>(QUEUE_MAX_SIZE);
+    private static final int QUEUE_MAX_SIZE = 25;
+    private static final int MAP_MAX_SIZE = 100;
+
+    private static MessageQueue messageQueue = new MessageQueue();
+    private static Map<Long, BlockingQueue<PushMessage>> map = new ConcurrentHashMap<>(MAP_MAX_SIZE);
 
     private MessageQueue() {
     }
 
     public static MessageQueue getInstance() {
-        return alarmMessageQueue;
+        return messageQueue;
     }
+
 
     /**
      * 消息入队
@@ -31,8 +35,17 @@ public class MessageQueue {
      * @param msg
      * @return
      */
-    public boolean push(PushMessage msg) {
-        return this.blockingQueue.add(msg);//队列满了就抛出异常，不阻塞
+    public void push(PushMessage msg, Long botId) {
+
+        BlockingQueue<PushMessage> blockingQueue = map.getOrDefault(botId, new LinkedBlockingQueue<>(QUEUE_MAX_SIZE));
+        blockingQueue.add(msg);
+        if (map.containsKey(botId)) {
+            map.replace(botId, blockingQueue);
+
+        } else {
+            map.put(botId, blockingQueue);
+        }
+
     }
 
     /**
@@ -40,10 +53,13 @@ public class MessageQueue {
      *
      * @return
      */
-    public PushMessage poll() {
+    public PushMessage poll(Long botId) {
         PushMessage result = null;
         try {
-            result = this.blockingQueue.take();
+            if (map.containsKey(botId)) {
+                BlockingQueue<PushMessage> blockingQueue = map.get(botId);
+                result = blockingQueue.take();
+            }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

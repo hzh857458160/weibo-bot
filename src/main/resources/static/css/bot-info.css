@@ -1,0 +1,140 @@
+.panel-body {
+    height: 1500px;
+    overflow: hidden;
+    white-space: pre-line;
+    font-size: 25px;
+}
+
+.m-panel {
+    margin-bottom: 20px;
+}
+
+.wrapper.first {
+    padding-top: 9em;
+}
+
+.wrapper.style1 {
+    background-image: none;
+    background-color: #fff;
+}
+
+.wrapper.style2 {
+    background-color: #fafafa;
+    text-shadow: 1px 1px 0px #fff;
+}
+
+.wrapper.style3 {
+    background-color: #f4f4f4;
+    /*text-shadow: 1px 1px 0px #fff;*/
+}
+
+.wrapper.first {
+    box-shadow: none;
+}
+
+.wrapper {
+    padding: 5em 0 5em 0;
+    text-align: center;
+}
+
+#top {
+    text-align: left;
+}
+
+.container {
+    margin-left: auto;
+    margin-right: auto;
+    width: 960px;
+}
+
+.row {
+    margin: -25px 0 -1px -25px;
+}
+
+.row {
+    border-bottom: solid 1px transparent;
+}
+
+.row > * {
+    padding: 25px 0 0 25px;
+}
+
+.\34 u, .\34 u\24 {
+    width: 33.3333333333%;
+    clear: none;
+    margin-left: 0;
+}
+
+.row > * {
+    float: left;
+}
+
+#top .image {
+    width: 19.5em;
+    height: 19.5em;
+    margin: 0;
+}
+
+#top .image {
+    border-radius: 50%;
+}
+
+#top .image img {
+    border-radius: 50%;
+}
+
+.image.fit {
+    display: block;
+    width: 100%;
+}
+
+.image img {
+    display: block;
+    width: 70%;
+    text-align: center
+}
+
+#top p {
+    font-size: 1.5em;
+    line-height: 1.75em;
+}
+
+#top h1 {
+    margin-top: 0.35em;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin: 0 0 0.75em 0;
+}
+
+h1 {
+    font-size: 3.25em;
+    letter-spacing: -0.025em;
+}
+
+h1 {
+    font-weight: 300;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #3e3e3e;
+}
+
+p, ul, ol, dl, table {
+    margin-bottom: 1em;
+}
+
+.panel-img {
+    width: 600px;
+    height: auto;
+    float: left;
+    margin-left: 45px;
+    margin-bottom: 15px;
+}
+
+.panel-text {
+    float: left;
+    margin-left: 45px;
+    margin-bottom: 15px;
+}
+
