@@ -1,5 +1,6 @@
 package com.scu.weibobot.domain.pojo;
 
+import com.alibaba.fastjson.JSONObject;
 import com.scu.weibobot.domain.BotInfo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -30,7 +31,10 @@ public class PushMessage {
     }
 
     public String toJSON() {
-        return "{\"msg\":\"" + toString() + "\", \"attach\":\"" + attach + "\"}";
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("msg", toString());
+        jsonObject.put("attach", attach);
+        return jsonObject.toJSONString();
     }
 
 

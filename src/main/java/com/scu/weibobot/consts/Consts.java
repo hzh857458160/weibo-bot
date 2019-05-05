@@ -31,7 +31,7 @@ public class Consts {
 //            "com.alibaba.android.rimet/10487439 Channel/227200 language/zh-CN'";
 
     //每到整点会运行
-    public static final String RUN_PER_HOUR_CRON = " 0 30 * * *  ?";
+    public static final String RUN_PER_HOUR_CRON = " 0 37 * * *  ?";
 
     //不同使用度之间的时间点数
     public static final int[] VERY_HIGH_ACTIVE_TIME = {12, 13, 14, 19, 20, 21, 22, 23};

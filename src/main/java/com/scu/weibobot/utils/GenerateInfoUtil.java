@@ -8,6 +8,8 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -188,8 +190,11 @@ public class GenerateInfoUtil {
             driver = WebDriverPool.getWebDriver();
             driver.get(url);
             waitSeconds(3);
+            WebElement songListBtn = WebDriverUtil.waitUntilElementExist(driver, 4, By.cssSelector(
+                    "#g_nav2 > div > ul > li:nth-child(3)"));
+
             //点击歌单选项
-            driver.findElement(By.cssSelector("#g_nav2 > div > ul > li:nth-child(3)")).click();
+            songListBtn.click();
             log.info("点击首页的歌单选项");
             waitSeconds(2);
             //切换到frame中
@@ -324,7 +329,7 @@ public class GenerateInfoUtil {
             driver = WebDriverPool.getWebDriver();
             log.info("get url：{}", url);
             driver.get(url);
-            waitSeconds(3);
+            new WebDriverWait(driver, 5).until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("div.articleCard")));
 
             List<WebElement> articleList = WebDriverUtil.forceGetElementList(By.cssSelector("a.img-wrap > img:only-child"), driver);
             log.info("获取到文章列表 size = {}", articleList.size());

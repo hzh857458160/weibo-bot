@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Date: 2019/03/09
  **/
 @Component
-@ServerEndpoint("/websocket")
+@ServerEndpoint("/websocket/{id}")
 @Slf4j
 public class WebSocketServer {
 
@@ -31,11 +31,13 @@ public class WebSocketServer {
 
     public static WebSocketServer webSocketServer;
 
+
     @PostConstruct
     public void init() {
         webSocketServer = this;
         webSocketServer.taskExecutor = this.taskExecutor;
     }
+
 
     /**
      * 收到新连接关闭调用的方法
@@ -64,7 +66,8 @@ public class WebSocketServer {
     public void onMessage(String message, Session session) {
         log.info("来自客户端的消息:" + message);
         map.put(message, session);
-        pushLogger(Long.valueOf(message), session);
+        log.info("session map size = {}", map.size());
+        taskExecutor.execute(pushLogger(Long.valueOf(message), session));
     }
 
     /**
@@ -90,12 +93,14 @@ public class WebSocketServer {
     /**
      * 开启线程，不断推送消息到前端
      */
-    private void pushLogger(Long botId, Session session) {
-        Runnable runnable = () -> {
+    private Runnable pushLogger(Long botId, Session session) {
+        log.info("pushLogger({}, {})", botId, session);
+        return () -> {
             boolean flag = true;
             while (flag) {
                 try {
                     PushMessage pushMessage = MessageQueue.getInstance().poll(botId);
+                    log.info("push logger : {}", pushMessage);
                     if (pushMessage != null) {
                         sendMessage(pushMessage.toJSON(), session);
                     }
@@ -106,8 +111,6 @@ public class WebSocketServer {
                 }
             }
         };
-        webSocketServer.taskExecutor.execute(runnable);
     }
-
 
 }

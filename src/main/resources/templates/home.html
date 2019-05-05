@@ -44,17 +44,6 @@
 </head>
 
 <body data-spy="scroll" data-target=".navbar-collapse">
-<!--&lt;!&ndash; Preloader &ndash;&gt;-->
-<!--<div id="loading">-->
-<!--<div id="loading-center">-->
-<!--<div id="loading-center-absolute">-->
-<!--<div class="object" id="object_one"></div>-->
-<!--<div class="object" id="object_two"></div>-->
-<!--<div class="object" id="object_three"></div>-->
-<!--<div class="object" id="object_four"></div>-->
-<!--</div>-->
-<!--</div>-->
-<!--</div>&lt;!&ndash;End off Preloader &ndash;&gt;-->
 
 <div class="culmn">
     <!--Home page style-->
@@ -114,12 +103,6 @@
                     <div class="home_text">
                         <h1 class="text-white">Weibo Bot <br/> 社交机器人主页</h1>
                     </div>
-
-                    <div class="home_btns m-top-120">
-                        <!--<a href="#addBot" class="btn btn-primary m-top-20">ADD WEIBO-BOT</a>-->
-                        <!--<a href="#observer" class="btn btn-default m-top-20">OBSERVE NOW</a>-->
-                    </div>
-
                 </div>
             </div><!--End off row-->
         </div><!--End off container -->
@@ -269,7 +252,7 @@
         var attach = "";
         try {
             $.post(
-                "/weibo-bot/account",
+                "/weibo-bot/test",
                 {
                     username: $("#input-4").val().trim(),
                     password: $("#input-5").val().trim()

@@ -43,10 +43,9 @@ public class WeiboOpUtil {
         }
         log.info("登录微博，账号为{}", username);
         driver.get(LOGIN_URL);
-        WebDriverUtil.waitUntilElementExist(driver, 10, By.id("loginName"));
 
         log.info("输入用户名");
-        WebElement usernameInput = WebDriverUtil.forceGetElement(By.id("loginName"), driver);
+        WebElement usernameInput = WebDriverUtil.waitUntilElementExist(driver, 10, By.id("loginName"));
         usernameInput.click();
         usernameInput.sendKeys(username);
         waitSeconds(3);
@@ -305,9 +304,12 @@ public class WeiboOpUtil {
 
     public static WebElement getRecentPostWeibo(WebDriver driver) {
         log.info(driver.getCurrentUrl());
-        WebDriverUtil.forceGetElement(By.cssSelector("div.nav-left.lite-iconf.lite-iconf-profile"), driver).click();
+        WebElement element = WebDriverUtil.forceGetElement(By.cssSelector("div.nav-left.lite-iconf.lite-iconf-profile"), driver);
+        WebDriverUtil.jsClick(driver, element);
         waitSeconds(3);
-        return WebDriverUtil.forceGetElementList(By.cssSelector("div.wb-item-wrap"), driver).get(0);
+        WebElement selfWeibo = WebDriverUtil.forceGetElementList(By.cssSelector("div.wb-item-wrap"), driver).get(0);
+        WebDriverUtil.scrollToElement(driver, selfWeibo);
+        return selfWeibo;
     }
 
 
@@ -325,7 +327,7 @@ public class WeiboOpUtil {
         waitSeconds(2);
         WebElement editDataBtn = driver.findElement(By.cssSelector("div.bar-btn.m-box-col > a"));
         driver.get(editDataBtn.getAttribute("href"));
-        waitSeconds(2);
+        WebDriverUtil.waitUntilElementExist(driver, 5, By.id("J_name"));
     }
 
     public static void setNickName(WebDriver driver, String nickName){
@@ -419,6 +421,12 @@ public class WeiboOpUtil {
         return driver.findElements(By.cssSelector("div.wb-item-wrap")).get(index);
     }
 
+    /**
+     * 设置头像
+     *
+     * @param driver
+     * @param imgPath 绝对路径
+     */
     public static void setHeadImg(WebDriver driver, String imgPath) {
         log.info(driver.getCurrentUrl());
         String handle = WebDriverUtil.openNewTab(driver, "https://m.weibo.cn/home/version?url=wap");

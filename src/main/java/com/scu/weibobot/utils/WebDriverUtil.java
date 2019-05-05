@@ -58,6 +58,7 @@ public class WebDriverUtil {
             log.info("存在cookies");
             Set<Object> cookieSet = webDriverUtil.redisService.sGet(key);
             driver.get(url);
+            waitSeconds(1);
             for (Object obj : cookieSet){
                 WebDriverUtil.addCookie(driver, (Cookie) obj);
             }
@@ -73,8 +74,8 @@ public class WebDriverUtil {
 
     }
 
-    public static void waitUntilElementExist(WebDriver driver, int waitMaxTime, By by) {
-        new WebDriverWait(driver, waitMaxTime)
+    public static WebElement waitUntilElementExist(WebDriver driver, int waitMaxTime, By by) {
+        return new WebDriverWait(driver, waitMaxTime)
                 .until(ExpectedConditions.visibilityOfElementLocated(by));
     }
 
@@ -248,7 +249,8 @@ public class WebDriverUtil {
 
     public static void scrollToElement(WebDriver driver, WebElement element) {
 //        log.info("scroll view element");
-        WebDriverUtil.jsExecuter(driver, "arguments[0].scrollIntoView(true);", element);
+        WebDriverUtil.jsExecuter(driver, "arguments[0].scrollIntoView(false);", element);
+        scrollPage(driver, 150);
         waitSeconds(1);
     }
 
@@ -268,6 +270,10 @@ public class WebDriverUtil {
     public static void addCookies(WebDriver driver, Set<Cookie> cookieSet){
         cookieSet.forEach(cookie -> addCookie(driver, cookie));
         driver.navigate().refresh();
+    }
+
+    public static Object jsClick(WebDriver driver, WebElement element) {
+        return jsExecuter(driver, "arguments[0].click();", element);
     }
 
     public static Object jsExecuter(WebDriver driver, String js, Object param){
@@ -298,29 +304,29 @@ public class WebDriverUtil {
         return tempFile.getName();
     }
 
-    public static String getCommentScreenShot(WebDriver driver) throws IOException {
-        WebElement sourceWeibo = WebDriverUtil.forceGetElement(By.cssSelector("div.card.m-panel.card9.f-weibo"), driver);
-        WebElement selfComment = WebDriverUtil.forceGetElementList(
-                By.cssSelector("div.card.m-avatar-box.lite-page-list"), driver).get(0);
-
-        File screen = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-        BufferedImage image = ImageIO.read(screen);
-        //元素坐标
-        Point pWeibo = sourceWeibo.getLocation();
-        Point pComment = selfComment.getLocation();
-        //获取元素的高度、宽度
-        int width = sourceWeibo.getSize().getWidth();
-        int height = pComment.getY() + selfComment.getSize().getHeight();
-        Dimension dimension = new Dimension(width, height);
-        //创建一个矩形使用上面的高度，和宽度
-        Rectangle rect = new Rectangle(pWeibo, dimension);
-        BufferedImage img = image.getSubimage(pWeibo.getX(), pWeibo.getY(), rect.width, rect.height);
-        ImageIO.write(img, "png", screen);
-        File tempFile = new File("src\\main\\resources\\static\\img\\screenshots\\" + System.currentTimeMillis() + ".png");
-        FileUtils.copyFile(screen, tempFile);
-        screen.delete();
-        return tempFile.getName();
-    }
+//    public static String getCommentScreenShot(WebDriver driver) throws IOException {
+//        WebElement sourceWeibo = WebDriverUtil.forceGetElement(By.cssSelector("div.card.m-panel.card9.f-weibo"), driver);
+//        WebElement selfComment = WebDriverUtil.forceGetElementList(
+//                By.cssSelector("div.card.m-avatar-box.lite-page-list"), driver).get(0);
+//
+//        File screen = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+//        BufferedImage image = ImageIO.read(screen);
+//        //元素坐标
+//        Point pWeibo = sourceWeibo.getLocation();
+//        Point pComment = selfComment.getLocation();
+//        //获取元素的高度、宽度
+//        int width = sourceWeibo.getSize().getWidth();
+//        int height = pComment.getY() + selfComment.getSize().getHeight();
+//        Dimension dimension = new Dimension(width, height);
+//        //创建一个矩形使用上面的高度，和宽度
+//        Rectangle rect = new Rectangle(pWeibo, dimension);
+//        BufferedImage img = image.getSubimage(pWeibo.getX(), pWeibo.getY(), rect.width, rect.height);
+//        ImageIO.write(img, "png", screen);
+//        File tempFile = new File("src\\main\\resources\\static\\img\\screenshots\\" + System.currentTimeMillis() + ".png");
+//        FileUtils.copyFile(screen, tempFile);
+//        screen.delete();
+//        return tempFile.getName();
+//    }
 
 
 }

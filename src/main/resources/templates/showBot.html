@@ -93,12 +93,10 @@
         socket.onmessage = function (event) {
             //发现消息进入
             console.log(event.data);
-            var jsonData = eval("(" + event.data + ")");
-            console.log(jsonData);
             var q = $(".panel-body");
-            var text = "<p class='panel-text'>" + jsonData.msg + ":</p>";
-            if (jsonData.attach !== "") {
-                text = text + "<img class='panel-img' alt='' src=\"/weibo-bot/static/img/screenshots/" + jsonData.attach + "\"/>";
+            var text = "<p class='panel-text'>" + event.data.msg + ":</p>";
+            if (event.data.attach !== "") {
+                text = text + "<img class='panel-img' alt='' src=\"/weibo-bot/static/img/screenshots/" + event.data.attach + "\"/>";
             }
             q.prepend(text + "\n");
         };

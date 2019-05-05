@@ -154,10 +154,10 @@ public class MainController {
 //        result.put("code", "0");
 //        result.put("msg", "成功添加账号");
 //        result.put("attach", "15");
-//        result.put("code", "10");
-//        result.put("msg", "账号密码有误，请确认后重试");
-        result.put("code", "11");
-        result.put("msg", "未知错误");
+        result.put("code", "10");
+        result.put("msg", "账号密码有误，请确认后重试");
+//        result.put("code", "11");
+//        result.put("msg", "未知错误");
         PrintWriter out = response.getWriter();
         out.print(result);
         out.flush();

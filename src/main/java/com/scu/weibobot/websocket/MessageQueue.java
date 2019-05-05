@@ -1,6 +1,7 @@
 package com.scu.weibobot.websocket;
 
 import com.scu.weibobot.domain.pojo.PushMessage;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -13,6 +14,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * Author: HanrAx
  * Date: 2019/03/09
  **/
+@Slf4j
 public class MessageQueue {
     //队列大小
     private static final int QUEUE_MAX_SIZE = 25;
@@ -36,7 +38,7 @@ public class MessageQueue {
      * @return
      */
     public void push(PushMessage msg, Long botId) {
-
+        log.info("MessageQueue.push({}, {})", msg, botId);
         BlockingQueue<PushMessage> blockingQueue = map.getOrDefault(botId, new LinkedBlockingQueue<>(QUEUE_MAX_SIZE));
         blockingQueue.add(msg);
         if (map.containsKey(botId)) {
@@ -45,6 +47,7 @@ public class MessageQueue {
         } else {
             map.put(botId, blockingQueue);
         }
+//        log.info("map size = {}", map.size());
 
     }
 
@@ -54,11 +57,15 @@ public class MessageQueue {
      * @return
      */
     public PushMessage poll(Long botId) {
+        log.info("MessageQueue.poll({})", botId);
         PushMessage result = null;
         try {
             if (map.containsKey(botId)) {
                 BlockingQueue<PushMessage> blockingQueue = map.get(botId);
                 result = blockingQueue.take();
+                log.info("poll() return result = {}", result);
+            } else {
+                log.error("MessageQueue.poll() error, no contains key");
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
