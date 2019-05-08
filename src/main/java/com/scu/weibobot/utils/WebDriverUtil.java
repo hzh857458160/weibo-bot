@@ -250,7 +250,6 @@ public class WebDriverUtil {
     public static void scrollToElement(WebDriver driver, WebElement element) {
 //        log.info("scroll view element");
         WebDriverUtil.jsExecuter(driver, "arguments[0].scrollIntoView(false);", element);
-        scrollPage(driver, 150);
         waitSeconds(1);
     }
 

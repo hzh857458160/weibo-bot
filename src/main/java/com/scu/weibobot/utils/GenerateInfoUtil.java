@@ -1,9 +1,13 @@
 package com.scu.weibobot.utils;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.scu.weibobot.consts.Consts;
+import com.scu.weibobot.domain.pojo.HttpResult;
 import com.scu.weibobot.domain.pojo.NickNameAndImgSrc;
 import com.scu.weibobot.taskexcuter.WebDriverPool;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
@@ -11,6 +15,9 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
@@ -366,6 +373,54 @@ public class GenerateInfoUtil {
 
         }
         return contentSb.toString();
+    }
+
+    public static String generateCommentByTencentAI(String weiboContent) {
+        String url = "https://api.ai.qq.com/fcgi-bin/nlp/nlp_textchat";
+        String result = null;
+        try {
+            Map<String, String> map = new HashMap<>();
+            map.put("app_id", "2116338461");
+            map.put("session", "TencentAI");
+            map.put("question", weiboContent);
+            map.put("time_stamp", Instant.now().getEpochSecond() + "");
+            map.put("nonce_str", Instant.now().getEpochSecond() + "");
+            HttpResult httpResult = HttpUtil.doGet(url, getSignature(map, "VpmFEpXt2jxGPkCI"));
+            JSONObject jsonObject = JSON.parseObject(httpResult.getContent());
+            result = jsonObject.getJSONObject("data").getString("answer");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+
+    private static Map<String, String> getSignature(Map<String, String> params, String appKey) throws IOException {
+        Map<String, String> sortedParams = new TreeMap<>(params);
+        Set<Map.Entry<String, String>> entrySet = sortedParams.entrySet();
+
+        StringBuilder baseString = new StringBuilder();
+        for (Map.Entry<String, String> param : entrySet) {
+            if (param.getValue() != null && !"".equals(param.getKey().trim()) &&
+                    !"sign".equals(param.getKey().trim()) && !"".equals(param.getValue())) {
+
+                baseString.append(param.getKey().trim()).append("=")
+                        .append(URLEncoder.encode(param.getValue(), "UTF-8")).append("&");
+            }
+        }
+        if (baseString.length() > 0) {
+            baseString.deleteCharAt(baseString.length() - 1).append("&app_key=")
+                    .append(appKey);
+        }
+        try {
+            String sign = DigestUtils.md5Hex(baseString.toString().getBytes());
+            sortedParams.put("sign", sign.toUpperCase());
+
+        } catch (Exception ex) {
+            throw new IOException(ex);
+        }
+        return sortedParams;
     }
 
 

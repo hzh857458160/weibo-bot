@@ -20,12 +20,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * Date: 2019/03/09
  **/
 @Component
-@ServerEndpoint("/websocket/{id}")
+@ServerEndpoint("/websocket")
 @Slf4j
 public class WebSocketServer {
 
     //concurrent包的线程安全Set，用来存放每个客户端对应的MyWebSocket对象。若要实现服务端与单一客户端通信的话，可以使用Map来存放，其中Key可以为用户标识
     private static Map<String, Session> map = new ConcurrentHashMap<>();
+
     @Autowired
     private ThreadPoolTaskExecutor taskExecutor;
 
@@ -54,6 +55,7 @@ public class WebSocketServer {
     public void onClose(Session session) {
         log.info("有连接关闭！");
 
+
     }
 
 
@@ -66,8 +68,8 @@ public class WebSocketServer {
     public void onMessage(String message, Session session) {
         log.info("来自客户端的消息:" + message);
         map.put(message, session);
-        log.info("session map size = {}", map.size());
-        taskExecutor.execute(pushLogger(Long.valueOf(message), session));
+        webSocketServer.taskExecutor.execute(pushLogger(Long.valueOf(message), session));
+
     }
 
     /**
@@ -95,22 +97,23 @@ public class WebSocketServer {
      */
     private Runnable pushLogger(Long botId, Session session) {
         log.info("pushLogger({}, {})", botId, session);
-        return () -> {
+        Runnable runnable = () -> {
             boolean flag = true;
             while (flag) {
                 try {
                     PushMessage pushMessage = MessageQueue.getInstance().poll(botId);
                     log.info("push logger : {}", pushMessage);
-                    if (pushMessage != null) {
-                        sendMessage(pushMessage.toJSON(), session);
-                    }
+                    sendMessage(pushMessage.toJSON(), session);
+
                 } catch (Exception e) {
-                    log.warn(e.getMessage());
+                    e.printStackTrace();
                     flag = false;
 
                 }
             }
         };
+        return runnable;
+
     }
 
 }

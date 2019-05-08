@@ -6,6 +6,7 @@ import com.scu.weibobot.consts.Consts;
 import com.scu.weibobot.domain.BotInfo;
 import com.scu.weibobot.domain.WeiboAccount;
 import com.scu.weibobot.domain.pojo.NickNameAndImgSrc;
+import com.scu.weibobot.domain.pojo.PushMessage;
 import com.scu.weibobot.domain.pojo.WeiboUser;
 import com.scu.weibobot.service.BotInfoService;
 import com.scu.weibobot.service.RedisService;
@@ -13,6 +14,7 @@ import com.scu.weibobot.service.WeiboAccountService;
 import com.scu.weibobot.taskexcuter.WebDriverPool;
 import com.scu.weibobot.utils.GenerateInfoUtil;
 import com.scu.weibobot.utils.WeiboOpUtil;
+import com.scu.weibobot.websocket.MessageQueue;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.WebDriver;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -246,6 +248,35 @@ public class MainController {
         }
 
 
+    }
+
+    @GetMapping("/test")
+    @ResponseBody
+    public void test(HttpServletRequest request) {
+        BotInfo botInfo1 = botInfoService.findBotInfoByAccountId(2L);
+        BotInfo botInfo2 = botInfoService.findBotInfoByAccountId(3L);
+
+        PushMessage pm1 = new PushMessage();
+        pm1.setBotInfo(botInfo1);
+        pm1.setBody("阅读了 啊晗1 的微博");
+        pm1.setTime(LocalTime.now());
+        pm1.setAttach("1557045716977.png");
+
+        PushMessage pm2 = new PushMessage();
+        pm2.setBotInfo(botInfo2);
+        pm2.setBody("阅读了 啊晗2 的微博");
+        pm2.setTime(LocalTime.now());
+        pm2.setAttach("1557045716977.png");
+
+        PushMessage pm3 = new PushMessage();
+        pm3.setBotInfo(botInfo1);
+        pm3.setBody("阅读了 啊晗3 的微博");
+        pm3.setTime(LocalTime.now());
+        pm3.setAttach("1557045716977.png");
+
+        MessageQueue.getInstance().push(pm1, 2L);
+        MessageQueue.getInstance().push(pm2, 3L);
+        MessageQueue.getInstance().push(pm3, 2L);
     }
 
 

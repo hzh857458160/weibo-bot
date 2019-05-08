@@ -56,19 +56,15 @@ public class MessageQueue {
      *
      * @return
      */
-    public PushMessage poll(Long botId) {
+    public PushMessage poll(Long botId) throws InterruptedException {
         log.info("MessageQueue.poll({})", botId);
         PushMessage result = null;
-        try {
-            if (map.containsKey(botId)) {
-                BlockingQueue<PushMessage> blockingQueue = map.get(botId);
-                result = blockingQueue.take();
-                log.info("poll() return result = {}", result);
-            } else {
-                log.error("MessageQueue.poll() error, no contains key");
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if (map.containsKey(botId)) {
+            BlockingQueue<PushMessage> blockingQueue = map.get(botId);
+            result = blockingQueue.take();
+            log.info("poll() return result = {}", result);
+        } else {
+            log.error("MessageQueue.poll() error, no contains key");
         }
         return result;
     }

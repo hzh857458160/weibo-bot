@@ -26,9 +26,9 @@ spring:
     show-sql: true
 
   redis:
-    host: 47.100.49.45
+    host: 120.78.148.229
     port: 6379
-    password: N0GameN0L1feSCU.
+    password: RedisHanrAx123
 
 logging:
   config: classpath:log4j2-spring.xml

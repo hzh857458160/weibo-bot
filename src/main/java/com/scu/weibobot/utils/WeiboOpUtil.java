@@ -472,5 +472,9 @@ public class WeiboOpUtil {
         return list;
     }
 
+    public static String getWeiboText(WebElement weibo) {
+        return weibo.findElement(By.cssSelector("div.weibo-text")).getText();
+    }
+
 
 }

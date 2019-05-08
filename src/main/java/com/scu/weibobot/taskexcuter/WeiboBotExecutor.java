@@ -114,11 +114,13 @@ public class WeiboBotExecutor implements Runnable {
                     waitSeconds((random.nextDouble() + 0.7));
                 }
                 //20%的概率评论
-//                int commentRandom = random.nextInt(100) + 1;
-//                if (commentRandom <= Consts.COMMENT_WEIBO_PROB) {
-//                    WeiboOpUtil.commentWeibo(driver, weibo, "");
-//                    addMessage(pushMsg, "评论 " + weiboName + " 的微博：" + content);
-//                }
+                int commentRandom = random.nextInt(100) + 1;
+                if (commentRandom <= Consts.COMMENT_WEIBO_PROB) {
+                    String weiboContent = WeiboOpUtil.getWeiboText(weibo);
+                    String comment = GenerateInfoUtil.generateCommentByTencentAI(weiboContent);
+                    WeiboOpUtil.commentWeibo(driver, weibo, comment);
+                    addMessage(pushMsg, "评论 " + weiboName + " 的微博：" + comment);
+                }
                 waitSeconds(1);
                 //20%的概率转发
                 int reportRandom = random.nextInt(100) + 1;

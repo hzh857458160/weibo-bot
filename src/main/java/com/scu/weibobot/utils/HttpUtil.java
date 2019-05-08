@@ -81,7 +81,6 @@ public class HttpUtil {
                 uriBuilder.setParameter(entry.getKey(), entry.getValue());
             }
         }
-
         // 创建http对象
         HttpGet httpGet = new HttpGet(uriBuilder.build());
         /**

@@ -74,7 +74,7 @@
             <div class="panel-body">
             </div>
         </div>
-    </div>
+    </div
 </div>
 <script>
     /*
@@ -84,19 +84,22 @@
     if (typeof (WebSocket) == "undefined") {
         console.log("您的浏览器不支持WebSocket");
     } else {
-        socket = new WebSocket("ws://localhost:8080/weibo-bot/websocket");
+        var url = "ws://localhost:8080/weibo-bot/websocket/" + $("#botId").text();
+        socket = new WebSocket(url);
+        // socket = new WebSocket("ws://localhost:8080/weibo-bot/websocket");
         //打开事件
         socket.onopen = function () {
-            socket.send($("#botId").text());
+            // socket.send($("#botId").text());
         };
         //获得消息事件
         socket.onmessage = function (event) {
             //发现消息进入
             console.log(event.data);
+            var obj = eval('(' + event.data + ')');
             var q = $(".panel-body");
-            var text = "<p class='panel-text'>" + event.data.msg + ":</p>";
+            var text = "<p class='panel-text'>" + obj.msg + ":</p>";
             if (event.data.attach !== "") {
-                text = text + "<img class='panel-img' alt='' src=\"/weibo-bot/static/img/screenshots/" + event.data.attach + "\"/>";
+                text = text + "<img class='panel-img' alt='' src=\"/weibo-bot/static/img/screenshots/" + obj.attach + "\"/>";
             }
             q.prepend(text + "\n");
         };
