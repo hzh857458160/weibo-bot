@@ -5,7 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.scu.weibobot.consts.Consts;
 import com.scu.weibobot.domain.pojo.HttpResult;
 import com.scu.weibobot.domain.pojo.NickNameAndImgSrc;
-import com.scu.weibobot.taskexcuter.WebDriverPool;
+import com.scu.weibobot.taskexecute.WebDriverPool;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.openqa.selenium.By;
@@ -282,24 +282,23 @@ public class GenerateInfoUtil {
         int hour = LocalTime.now().getHour();
 
         if (isContained(Consts.VERY_LOW_ACTIVE_TIME, hour)) {
-            log.info("当前处于极低活跃度时间", hour);
+            log.info("当前时间为 {} ，处于极低活跃度时间", hour);
             prob = botProb * Consts.VL_ACTIVE_PROB;
 
-        }
-        if (isContained(Consts.LOW_ACTIVE_TIME, hour)) {
-            log.info("当前处于低活跃度时间", hour);
+        } else if (isContained(Consts.LOW_ACTIVE_TIME, hour)) {
+            log.info("当前时间为 {} ，当前处于低活跃度时间", hour);
             prob = botProb * Consts.L_ACTIVE_PROB;
 
         } else if (isContained(Consts.NORMAL_ACTIVE_TIME, hour)) {
-            log.info("当前处于中活跃度时间", hour);
+            log.info("当前时间为 {} ，当前处于中活跃度时间", hour);
             prob = botProb * Consts.N_ACTIVE_PROB;
 
         } else if (isContained(Consts.HIGH_ACTIVE_TIME, hour)) {
-            log.info("当前处于较高活跃度时间", hour);
+            log.info("当前时间为 {} ，当前处于较高活跃度时间", hour);
             prob = botProb * Consts.H_ACTIVE_PROB;
 
         } else if (isContained(Consts.VERY_HIGH_ACTIVE_TIME, hour)) {
-            log.info("当前处于高活跃度时间", hour);
+            log.info("当前时间为 {} ，当前处于高活跃度时间", hour);
             prob = botProb * Consts.VH_ACTIVE_PROB;
         } else {
             log.error("hour error");
@@ -327,52 +326,173 @@ public class GenerateInfoUtil {
      * @param keyWord 关键字
      * @return 内容
      */
-    public static String generatePostContent(String keyWord) {
+    public static String generatePostContent(WebDriver driver, String keyWord) {
         log.info("进入generatePostContent({})", keyWord);
-        StringBuilder contentSb = new StringBuilder();
-        String url = "https://www.toutiao.com/search/?keyword=" + keyWord;
-        WebDriver driver = null;
-        try {
-            driver = WebDriverPool.getWebDriver();
-            log.info("get url：{}", url);
-            driver.get(url);
-            new WebDriverWait(driver, 5).until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("div.articleCard")));
+        String content = getContentByTouTiao(driver, keyWord);
+        if (content == null) {
+            content = getContentByYiDian(driver, keyWord);
+            if (content == null) {
+                content = getContentByBaiDu(driver, keyWord);
+            }
+        }
+        return content;
+    }
 
+    private static String getContentByTouTiao(WebDriver driver, String keyWord) {
+        String url = "https://www.toutiao.com/ch/news_hot/";
+        String prePageHandle = driver.getWindowHandle();
+        System.out.println(prePageHandle);
+        String result = null;
+        try {
+            //打开新标签页，并切换，当前有两个标签页
+            String mainPageHandle = WebDriverUtil.openNewTab(driver, url);
+            System.out.println(mainPageHandle);
+            WebDriverUtil.changeWindowTo(driver, mainPageHandle);
+            WebElement searchBar = new WebDriverWait(driver, 5).until(ExpectedConditions
+                    .presenceOfElementLocated(By.cssSelector("input[name = 'keyword']")));
+            searchBar.click();
+            searchBar.sendKeys(keyWord);
+            waitSeconds(2);
+            WebDriverUtil.forceGetElement(By.cssSelector("button[type='submit']"), driver).click();
+            waitSeconds(3);
+
+            WebDriverUtil.changeWindow(driver, prePageHandle, mainPageHandle);
+            String searchPageHandle = driver.getWindowHandle();
+
+            WebElement verifyBox = WebDriverUtil.isElementExist(By.cssSelector("body > div > div.verify-container"), driver);
+            if (verifyBox != null) {
+                WebDriverUtil.changeWindowAndCloseOthers(driver, prePageHandle);
+                return null;
+            }
             List<WebElement> articleList = WebDriverUtil.forceGetElementList(By.cssSelector("a.img-wrap > img:only-child"), driver);
             log.info("获取到文章列表 size = {}", articleList.size());
             Random random = new Random();
             int ra = random.nextInt(articleList.size());
             log.info("生成随机数为{}", ra);
             articleList.get(ra).click();
-            waitSeconds(2);
 
-            WebDriverUtil.changeWindow(driver);
-//            List<WebElement> imgList = driver.findElements(By.cssSelector("div.pgc-img > img"));
+            WebDriverUtil.changeWindow(driver, prePageHandle, mainPageHandle, searchPageHandle);
+            waitSeconds(4);
+
             List<WebElement> pList = driver.findElements(By.cssSelector("div.article-content > div > p"));
 
             log.info("获取到文字列表 size = {}", pList.size());
-            int i = 0;
-            for (WebElement pText : pList) {
-                if (i > 1) {
+            for (int i = 0; i < pList.size(); i++) {
+                String text = pList.get(i).getText().trim();
+                if (!"".equals(text) && text.length() < 50) {
+                    result = text;
                     break;
                 }
-                String text = pText.getText().trim();
-                log.info("第{}段文字：{}", i, text);
-                if ("".equals(text)) {
-                    continue;
-                }
-                contentSb.append(text).append("\n");
-                i++;
             }
+            WebDriverUtil.changeWindowAndCloseOthers(driver, prePageHandle);
+            return result;
 
         } catch (Exception e) {
-            e.printStackTrace();
-
-        } finally {
-            WebDriverPool.closeWebDriver(driver);
+            WebDriverUtil.changeWindowAndCloseOthers(driver, prePageHandle);
+            return result;
 
         }
-        return contentSb.toString();
+
+
+    }
+
+    private static String getContentByYiDian(WebDriver driver, String keyWord) {
+        String url = "http://www.yidianzixun.com/";
+        String result = "";
+        String prePageHandle = driver.getWindowHandle();
+        try {
+            String mainPageHandle = WebDriverUtil.openNewTab(driver, url);
+            WebDriverUtil.changeWindowTo(driver, mainPageHandle);
+            WebElement searchBar = new WebDriverWait(driver, 5).until(ExpectedConditions
+                    .presenceOfElementLocated(By.cssSelector("div.suggestion-search-box > input")));
+            searchBar.click();
+            searchBar.sendKeys(keyWord);
+            waitSeconds(2);
+            WebDriverUtil.forceGetElement(By.cssSelector("div.header-search > div > button"), driver).click();
+            waitSeconds(4);
+
+            WebDriverUtil.scrollToBottom(driver);
+            waitSeconds(2);
+            WebDriverUtil.scrollToBottom(driver);
+            waitSeconds(2);
+            List<WebElement> newsList = driver.findElements(By
+                    .cssSelector("div.channel-news.channel-news-0 > a[data-ctype=\"news\"]"));
+            int ra = new Random().nextInt(newsList.size());
+            newsList.get(ra).click();
+            WebDriverUtil.changeWindow(driver, prePageHandle, mainPageHandle);
+            new WebDriverWait(driver, 5).until(ExpectedConditions
+                    .presenceOfElementLocated(By.cssSelector("p")));
+
+            List<WebElement> pElementList;
+            String articleUrlToken = "www.yidianzixun.com/article";
+            if (!driver.getCurrentUrl().contains(articleUrlToken)) {
+                pElementList = driver.findElements(By.cssSelector("p"));
+            } else {
+                pElementList = driver.findElements(By.cssSelector("#imedia-article > p"));
+            }
+            for (int i = 0; i < 10; i++) {
+                String text = pElementList.get(i).getText().trim();
+                if (!"".equals(text) && text.length() < 50) {
+                    result = text;
+                    break;
+                }
+            }
+            WebDriverUtil.changeWindowAndCloseOthers(driver, prePageHandle);
+            return result;
+
+        } catch (Exception e) {
+            WebDriverUtil.changeWindowAndCloseOthers(driver, prePageHandle);
+            return null;
+        }
+    }
+
+    private static String getContentByBaiDu(WebDriver driver, String keyWord) {
+        String url = "https://www.baidu.com/";
+        String result = null;
+        String prePageHandle = driver.getWindowHandle();
+        try {
+            String mainPageHandle = WebDriverUtil.openNewTab(driver, url);
+            WebDriverUtil.changeWindowTo(driver, mainPageHandle);
+            WebElement searchBar = WebDriverUtil.waitUntilElementExist(driver, 5,
+                    By.cssSelector("#kw"));
+            searchBar.click();
+            searchBar.sendKeys(keyWord);
+            WebDriverUtil.forceGetElement(By.cssSelector("#su"), driver).click();
+
+            WebElement newsBtn = WebDriverUtil.waitUntilElementExist(driver, 5,
+                    By.cssSelector("#s_tab > div > a:nth-child(2)"));
+            newsBtn.click();
+
+            WebDriverUtil.waitUntilElementExist(driver, 5,
+                    By.cssSelector("#content_left"));
+
+            List<WebElement> titleList = driver.findElements(By.cssSelector("h3.c-title"));
+            String href = "";
+            while (!href.contains("baijiahao.baidu.com")) {
+                int ra = new Random().nextInt(titleList.size());
+                WebElement element = titleList.get(ra);
+                href = element.findElement(By.cssSelector("a")).getAttribute("href");
+            }
+            String articlePageHandle = WebDriverUtil.openNewTab(driver, href);
+            WebDriverUtil.changeWindowTo(driver, articlePageHandle);
+            WebDriverUtil.waitUntilElementExist(driver, 5,
+                    By.cssSelector("div.article-content"));
+            List<WebElement> spanList = WebDriverUtil.forceGetElementList(By.cssSelector("div.article-content > p"), driver);
+
+            for (int i = 0; i < spanList.size(); i++) {
+                String text = spanList.get(i).getText().trim();
+                if (!"".equals(text) && text.length() < 50) {
+                    result = text;
+                    break;
+                }
+            }
+            WebDriverUtil.changeWindowAndCloseOthers(driver, prePageHandle);
+            return result;
+
+        } catch (Exception e) {
+            WebDriverUtil.changeWindowAndCloseOthers(driver, prePageHandle);
+            return null;
+        }
     }
 
     public static String generateCommentByTencentAI(String weiboContent) {

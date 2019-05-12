@@ -19,7 +19,7 @@ import java.util.concurrent.Executor;
  * Date: 2019/02/10
  **/
 @Configuration
-@ComponentScan("com.scu.weibobot.taskexcuter")
+@ComponentScan("com.scu.weibobot.taskexecute")
 @EnableAsync //利用@EnableAsync注解开启异步任务支持
 @PropertySource("classpath:config.properties")
 @Slf4j

@@ -1,6 +1,5 @@
-package com.scu.weibobot.taskexcuter;
+package com.scu.weibobot.taskexecute;
 
-import com.scu.weibobot.consts.Consts;
 import com.scu.weibobot.domain.BotInfo;
 import com.scu.weibobot.domain.pojo.ProxyIp;
 import com.scu.weibobot.service.BotInfoService;

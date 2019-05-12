@@ -14,6 +14,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -76,7 +77,7 @@ public class WebDriverUtil {
 
     public static WebElement waitUntilElementExist(WebDriver driver, int waitMaxTime, By by) {
         return new WebDriverWait(driver, waitMaxTime)
-                .until(ExpectedConditions.visibilityOfElementLocated(by));
+                .until(ExpectedConditions.presenceOfElementLocated(by));
     }
 
     /**
@@ -227,7 +228,29 @@ public class WebDriverUtil {
         }
     }
 
+    public static void changeWindow(WebDriver driver, String... handles) {
+        List<String> list = Arrays.asList(handles);
+        for (String tmp : driver.getWindowHandles()) {
+            if (!list.contains(tmp)) {
+                driver.switchTo().window(tmp);
+                break;
+            }
+        }
+    }
 
+    public static void changeWindowAndCloseOthers(WebDriver driver, String handle) {
+        Set<String> handleSet = driver.getWindowHandles();
+        if (!driver.getWindowHandle().equals(handle)) {
+            driver.switchTo().window(handle);
+        }
+        for (String tmp : handleSet) {
+            if (!tmp.equals(handle)) {
+                driver.switchTo().window(tmp);
+                driver.close();
+                driver.switchTo().window(handle);
+            }
+        }
+    }
     /**
      * 滑动滑动条
      * @param driver
@@ -249,7 +272,7 @@ public class WebDriverUtil {
 
     public static void scrollToElement(WebDriver driver, WebElement element) {
 //        log.info("scroll view element");
-        WebDriverUtil.jsExecuter(driver, "arguments[0].scrollIntoView(false);", element);
+        WebDriverUtil.jsExecute(driver, "arguments[0].scrollIntoView(false);", element);
         waitSeconds(1);
     }
 
@@ -272,60 +295,53 @@ public class WebDriverUtil {
     }
 
     public static Object jsClick(WebDriver driver, WebElement element) {
-        return jsExecuter(driver, "arguments[0].click();", element);
+        return jsExecute(driver, "arguments[0].click();", element);
     }
 
-    public static Object jsExecuter(WebDriver driver, String js, Object param){
-        return ((JavascriptExecutor)driver).executeScript(js, param);
+    public static Object jsExecute(WebDriver driver, String js, Object param) {
+        if (param == null) {
+            return ((JavascriptExecutor) driver).executeScript(js);
+        }
+        return ((JavascriptExecutor) driver).executeScript(js, param);
     }
-    public static Object jsExecuter(WebDriver driver, String js){
-        return ((JavascriptExecutor)driver).executeScript(js);
+
+    public static Object jsExecute(WebDriver driver, String js) {
+        return jsExecute(driver, js, null);
     }
 
     //TODO:将当前截图存入项目目录下，并返回截图地址
-    public static String getScreenShotFileName(WebElement element) throws IOException {
+    public static String getScreenShotFileName(WebDriver driver, WebElement element) throws IOException {
+        WebDriverUtil.scrollToElement(driver, element);
         WrapsDriver wrapsDriver = (WrapsDriver) element;
         File screen = ((TakesScreenshot) wrapsDriver.getWrappedDriver()).getScreenshotAs(OutputType.FILE);
         BufferedImage image = ImageIO.read(screen);
-        //元素坐标
-        Point p = element.getLocation();
-        //获取元素的高度、宽度
         int width = element.getSize().getWidth();
         int height = element.getSize().getHeight();
-        Dimension dimension = new Dimension(width, height);
-        //创建一个矩形使用上面的高度，和宽度
-        Rectangle rect = new Rectangle(p, dimension);
-        BufferedImage img = image.getSubimage(p.getX(), p.getY(), rect.width, rect.height);
+        int y = image.getHeight() - height;
+        int x = element.getLocation().getX();
+        return cutAndSaveImage(screen, x, y, width, height);
+    }
+
+    public static String getCommentScreenShot(WebDriver driver) throws IOException {
+        WebElement element = WebDriverUtil.forceGetElement(By.cssSelector("div.lite-page-tab"), driver);
+        File screen = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+        BufferedImage image = ImageIO.read(screen);
+        int width = element.getSize().getWidth();
+        int height = image.getHeight();
+        int x = element.getLocation().getX();
+        int y = 0;
+        return cutAndSaveImage(screen, x, y, width, height);
+    }
+
+    private static String cutAndSaveImage(File screen, int x, int y, int width, int height) throws IOException {
+        BufferedImage image = ImageIO.read(screen);
+        BufferedImage img = image.getSubimage(x, y, width, height);
         ImageIO.write(img, "png", screen);
         File tempFile = new File("src\\main\\resources\\static\\img\\screenshots\\" + System.currentTimeMillis() + ".png");
         FileUtils.copyFile(screen, tempFile);
         screen.delete();
         return tempFile.getName();
     }
-
-//    public static String getCommentScreenShot(WebDriver driver) throws IOException {
-//        WebElement sourceWeibo = WebDriverUtil.forceGetElement(By.cssSelector("div.card.m-panel.card9.f-weibo"), driver);
-//        WebElement selfComment = WebDriverUtil.forceGetElementList(
-//                By.cssSelector("div.card.m-avatar-box.lite-page-list"), driver).get(0);
-//
-//        File screen = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-//        BufferedImage image = ImageIO.read(screen);
-//        //元素坐标
-//        Point pWeibo = sourceWeibo.getLocation();
-//        Point pComment = selfComment.getLocation();
-//        //获取元素的高度、宽度
-//        int width = sourceWeibo.getSize().getWidth();
-//        int height = pComment.getY() + selfComment.getSize().getHeight();
-//        Dimension dimension = new Dimension(width, height);
-//        //创建一个矩形使用上面的高度，和宽度
-//        Rectangle rect = new Rectangle(pWeibo, dimension);
-//        BufferedImage img = image.getSubimage(pWeibo.getX(), pWeibo.getY(), rect.width, rect.height);
-//        ImageIO.write(img, "png", screen);
-//        File tempFile = new File("src\\main\\resources\\static\\img\\screenshots\\" + System.currentTimeMillis() + ".png");
-//        FileUtils.copyFile(screen, tempFile);
-//        screen.delete();
-//        return tempFile.getName();
-//    }
 
 
 }

@@ -90,7 +90,7 @@ public class WeiboOpUtil {
      * @param driver
      * @param content
      */
-    public static void postWeibo(WebDriver driver, String content, boolean addEmote) throws IOException {
+    public static void postWeibo(WebDriver driver, String content, boolean addEmote) {
         waitSeconds(3);
         log.info("发送微博，内容为[{}]", content);
         WebDriverUtil.forceGetElement(By.cssSelector("div.lite-iconf.lite-iconf-releas"), driver).click();
@@ -122,8 +122,13 @@ public class WeiboOpUtil {
         return WebDriverUtil.forceGetElement(By.cssSelector("h3.m-text-cut"), weibo).getText();
     }
 
-    public static void likeWeibo(WebElement weibo) {
+    public static void likeWeibo(WebDriver driver, WebElement weibo) {
         WebDriverUtil.forceGetElement(By.cssSelector(LIKE_BTN_SELECTOR), weibo).click();
+        WebDriverUtil.waitSeconds(1);
+        WebElement element = WebDriverUtil.isElementExist(By.cssSelector("div.mv-toast.mask-wrap"), driver);
+        if (element != null) {
+            log.warn("该账号疑似被封禁");
+        }
 
 //        return getWeiboName(weibo);
     }
@@ -142,9 +147,8 @@ public class WeiboOpUtil {
             WebElement textarea = WebDriverUtil.forceGetElement(By.cssSelector("textarea.textarea"), driver);
             textarea.sendKeys(content);
             WebDriverUtil.forceGetElement(By.cssSelector("button.btn-send"), driver).click();
-            waitSeconds(2);
-            WebDriverUtil.forceGetElement(By.cssSelector("div.nav-left"), driver).click();
         }
+        waitSeconds(4);
 
     }
 
@@ -285,7 +289,7 @@ public class WeiboOpUtil {
                 }
                 String addTip = WebDriverUtil.forceGetElement(By.cssSelector("h4"), addBox).getText();
                 if (addTip.equals("加关注")) {
-                    WebDriverUtil.jsExecuter(driver, jsClick, addBox);
+                    WebDriverUtil.jsExecute(driver, jsClick, addBox);
                     waitSeconds(1);
                 }
                 String imgSrc = WebDriverUtil.forceGetElement(By.cssSelector("div.m-img-box > img")

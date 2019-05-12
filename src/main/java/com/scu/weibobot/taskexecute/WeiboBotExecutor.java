@@ -1,4 +1,4 @@
-package com.scu.weibobot.taskexcuter;
+package com.scu.weibobot.taskexecute;
 
 import com.scu.weibobot.consts.Consts;
 import com.scu.weibobot.domain.BotInfo;
@@ -32,9 +32,12 @@ public class WeiboBotExecutor implements Runnable {
     private BotInfo botInfo;
     private WeiboAccount weiboAccount;
     private BotInfoService botInfoService;
+    private Random random = new Random();
+    private String nickName;
 
     public void setBotInfo(BotInfo botInfo) {
         this.botInfo = botInfo;
+        this.nickName = botInfo.getNickName();
     }
 
     public void setWeiboAccount(WeiboAccount weiboAccount) {
@@ -46,6 +49,7 @@ public class WeiboBotExecutor implements Runnable {
     }
 
 
+    @Override
     public void run() {
         if (botInfo == null || weiboAccount == null || botInfoService == null) {
             log.error("WeiboBotExecutor参数有误 [botInfo:{}, weiboAccount:{}]", botInfo, weiboAccount);
@@ -55,80 +59,63 @@ public class WeiboBotExecutor implements Runnable {
     }
 
     private void doSomethingInWeibo() {
-        Long id = botInfo.getBotId();
-        String nickName = botInfo.getNickName();
-        botInfoService.updateStatusByBotId(id, 0);
+        //修改运行状态
+        botInfoService.updateStatusByBotId(botInfo.getBotId(), 0);
         WebDriver driver = null;
+        //初始化推送日志
         PushMessage pushMsg = new PushMessage();
         pushMsg.setBotInfo(botInfo);
+
         try {
+            //获取driver
             driver = WebDriverPool.getWebDriver(botInfo);
             if (driver == null) {
                 driver = WebDriverPool.getWebDriver();
             }
-            log.info("{} 获取到可用的WebDriver", nickName);
             addMessage(pushMsg, "获取到可用的WebDriver");
+            //登陆微博
             WeiboOpUtil.loginWeibo(driver, weiboAccount);
-            log.info("{} 登录微博", nickName);
             addMessage(pushMsg, "登陆微博");
-            Random random = new Random();
+            //判断是否发布微博
             int postWeiboRandom = random.nextInt(100) + 1;
             if (postWeiboRandom <= Consts.POST_WEIBO_PROB) {
-                int interestRandom = random.nextInt(3);
-                //随机获取兴趣
-                String interest = botInfo.getInterests().split("#")[interestRandom];
-                log.info("{} 获取生成内容", nickName);
-                //生成发送内容并发送微博
-                String content = GenerateInfoUtil.generatePostContent(interest);
-                log.info("{} 发送微博", nickName);
-                WeiboOpUtil.postWeibo(driver, content, false);
-                //获取刚发送的微博
-                WebElement recentWeibo = WeiboOpUtil.getRecentPostWeibo(driver);
-                //生成截图，并返回主页
-                String imgName = WebDriverUtil.getScreenShotFileName(recentWeibo);
-                WeiboOpUtil.backToMainPage(driver);
-
-                addMessage(pushMsg, "发送" + interest + "相关的微博：" + content, imgName);
-                waitSeconds(2);
+                postWeibo(driver, pushMsg);
             }
+            //开始遍历微博列表
             String findWeibo = "div.wb-item-wrap:nth-child(INDEX)";
-            log.info("{} 开始阅读微博", nickName);
             addMessage(pushMsg, "开始阅读微博");
             for (int i = 1; i <= 20; i++) {
-                WebElement weibo = WebDriverUtil.forceGetElement(By.cssSelector(
-                        findWeibo.replace("INDEX", i + "")), driver);
+                By getWeiboBy = By.cssSelector(findWeibo.replace("INDEX", i + ""));
+                WebElement weibo = WebDriverUtil.forceGetElement(getWeiboBy, driver);
                 WebDriverUtil.scrollToElement(driver, weibo);
                 String weiboName = WeiboOpUtil.getWeiboName(weibo);
-                log.info("{} 开始阅读{}微博", nickName, weiboName);
+
                 addMessage(pushMsg, "阅读 " + weiboName + " 的微博");
                 //30%的概率遇到感兴趣的微博，仔细阅读并点赞
-                int likeRandom = random.nextInt(100) + 1;
-                if (likeRandom <= Consts.LIKE_WEIBO_PROB) {
+                if (getRandomNum() <= Consts.LIKE_WEIBO_PROB) {
+                    //点赞
                     waitSeconds((random.nextDouble() + 2.0));
-                    WeiboOpUtil.likeWeibo(weibo);
-                    String imgName = WebDriverUtil.getScreenShotFileName(weibo);
-                    log.info("{} 点赞微博并截图", nickName);
-                    addMessage(pushMsg, "仔细阅读点赞 " + weiboName + " 的微博", imgName);
+                    WeiboOpUtil.likeWeibo(driver, weibo);
+                    //截图
+                    String imgName = WebDriverUtil.getScreenShotFileName(driver, weibo);
+                    addMessage(pushMsg, "仔细阅读并点赞 " + weiboName + " 的微博", imgName);
                 } else {
                     //普通微博，简单阅读几秒
                     waitSeconds((random.nextDouble() + 0.7));
                 }
                 //20%的概率评论
-                int commentRandom = random.nextInt(100) + 1;
-                if (commentRandom <= Consts.COMMENT_WEIBO_PROB) {
-                    String weiboContent = WeiboOpUtil.getWeiboText(weibo);
-                    String comment = GenerateInfoUtil.generateCommentByTencentAI(weiboContent);
-                    WeiboOpUtil.commentWeibo(driver, weibo, comment);
+                if (getRandomNum() <= Consts.COMMENT_WEIBO_PROB) {
+                    String comment = commentWeibo(driver, weibo);
+                    weibo = WebDriverUtil.forceGetElement(getWeiboBy, driver);
                     addMessage(pushMsg, "评论 " + weiboName + " 的微博：" + comment);
                 }
                 waitSeconds(1);
                 //20%的概率转发
-                int reportRandom = random.nextInt(100) + 1;
-                if (reportRandom <= Consts.REPORT_WEIBO_PROB) {
+                if (getRandomNum() <= Consts.REPORT_WEIBO_PROB) {
                     WeiboOpUtil.reportWeibo(driver, weibo);
                     //获取刚发送的微博
                     WebElement recentWeibo = WeiboOpUtil.getRecentPostWeibo(driver);
-                    String imgPath = WebDriverUtil.getScreenShotFileName(recentWeibo);
+                    String imgPath = WebDriverUtil.getScreenShotFileName(driver, recentWeibo);
                     WeiboOpUtil.backToMainPage(driver);
                     log.info("{} 转发{}的微博", nickName, weiboName);
                     addMessage(pushMsg, "转发 " + weiboName + " 的微博", imgPath);
@@ -146,7 +133,53 @@ public class WeiboBotExecutor implements Runnable {
 
     }
 
+    private void postWeibo(WebDriver driver, PushMessage pushMsg) throws IOException {
+        int interestRandom = random.nextInt(3);
+        //随机获取兴趣
+        String interest = botInfo.getInterests().split("#")[interestRandom];
+        //生成发送内容并发送微博
+        String content = GenerateInfoUtil.generatePostContent(driver, interest);
+        log.info("{} 获取生成内容", nickName);
+
+        if (content != null) {
+            WeiboOpUtil.postWeibo(driver, content, false);
+            log.info("{} 发送微博: {}", nickName, content);
+            //获取刚发送的微博
+            WebElement recentWeibo = WeiboOpUtil.getRecentPostWeibo(driver);
+            //生成截图，并返回主页
+            String imgName = WebDriverUtil.getScreenShotFileName(driver, recentWeibo);
+            WeiboOpUtil.backToMainPage(driver);
+            addMessage(pushMsg, "发送" + interest + "相关的微博：", imgName);
+            waitSeconds(2);
+        } else {
+            log.warn("没有获取到发送内容");
+        }
+    }
+
+    private String commentWeibo(WebDriver driver, WebElement weibo) throws IOException {
+        //获取评论文本并评论
+        String weiboContent = WeiboOpUtil.getWeiboText(weibo);
+        String comment = GenerateInfoUtil.generateCommentByTencentAI(weiboContent);
+        WeiboOpUtil.commentWeibo(driver, weibo, comment);
+        //截图并返回
+        WebDriverUtil.getCommentScreenShot(driver);
+        WeiboOpUtil.backToMainPage(driver);
+        return comment;
+    }
+
+    private String reportWeibo(WebDriver driver, WebElement weibo) throws IOException {
+        //获取评论文本并评论
+        String weiboContent = WeiboOpUtil.getWeiboText(weibo);
+        String comment = GenerateInfoUtil.generateCommentByTencentAI(weiboContent);
+        WeiboOpUtil.commentWeibo(driver, weibo, comment);
+        //截图并返回
+        WebDriverUtil.getCommentScreenShot(driver);
+        WeiboOpUtil.backToMainPage(driver);
+        return comment;
+    }
+
     private void addMessage(PushMessage pushMsg, String msg, String attach) {
+        log.info("{} " + msg, nickName);
         Long botId = pushMsg.getBotInfo().getBotId();
         pushMsg.setBody(msg);
         pushMsg.setTime(LocalTime.now());
@@ -155,10 +188,10 @@ public class WeiboBotExecutor implements Runnable {
     }
 
     private void addMessage(PushMessage pushMsg, String msg) {
-        Long botId = pushMsg.getBotInfo().getBotId();
-        pushMsg.setBody(msg);
-        pushMsg.setTime(LocalTime.now());
-        MessageQueue.getInstance().push(pushMsg, botId);
+        addMessage(pushMsg, msg, null);
     }
 
+    private int getRandomNum() {
+        return random.nextInt(100) + 1;
+    }
 }
