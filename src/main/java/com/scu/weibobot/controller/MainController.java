@@ -11,7 +11,7 @@ import com.scu.weibobot.domain.pojo.WeiboUser;
 import com.scu.weibobot.service.BotInfoService;
 import com.scu.weibobot.service.RedisService;
 import com.scu.weibobot.service.WeiboAccountService;
-import com.scu.weibobot.taskexcuter.WebDriverPool;
+import com.scu.weibobot.taskexecute.WebDriverPool;
 import com.scu.weibobot.utils.GenerateInfoUtil;
 import com.scu.weibobot.utils.WeiboOpUtil;
 import com.scu.weibobot.websocket.MessageQueue;
@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDate;
@@ -253,29 +254,37 @@ public class MainController {
     @GetMapping("/test")
     @ResponseBody
     public void test(HttpServletRequest request) {
+        //创建session对象
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+
+        }
+        //把用户数据保存在session域对象中
+        session.setAttribute("test", "123");
+
         BotInfo botInfo1 = botInfoService.findBotInfoByAccountId(2L);
-        BotInfo botInfo2 = botInfoService.findBotInfoByAccountId(3L);
+//        BotInfo botInfo2 = botInfoService.findBotInfoByAccountId(3L);
 
         PushMessage pm1 = new PushMessage();
         pm1.setBotInfo(botInfo1);
-        pm1.setBody("阅读了 啊晗1 的微博");
+        pm1.setBody("发送 阅读 相关的微博：");
         pm1.setTime(LocalTime.now());
-        pm1.setAttach("1557045716977.png");
+        pm1.setAttach("1557416208764.png");
 
         PushMessage pm2 = new PushMessage();
-        pm2.setBotInfo(botInfo2);
-        pm2.setBody("阅读了 啊晗2 的微博");
+        pm2.setBotInfo(botInfo1);
+        pm2.setBody("仔细阅读并点赞 阅读小镇 的微博");
         pm2.setTime(LocalTime.now());
-        pm2.setAttach("1557045716977.png");
+        pm2.setAttach("like.png");
 
         PushMessage pm3 = new PushMessage();
         pm3.setBotInfo(botInfo1);
-        pm3.setBody("阅读了 啊晗3 的微博");
+        pm3.setBody("转发 双子阅读小屋 的微博");
         pm3.setTime(LocalTime.now());
-        pm3.setAttach("1557045716977.png");
+        pm3.setAttach("report.png");
 
         MessageQueue.getInstance().push(pm1, 2L);
-        MessageQueue.getInstance().push(pm2, 3L);
+        MessageQueue.getInstance().push(pm2, 2L);
         MessageQueue.getInstance().push(pm3, 2L);
     }
 
