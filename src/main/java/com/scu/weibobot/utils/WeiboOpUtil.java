@@ -45,19 +45,20 @@ public class WeiboOpUtil {
         driver.get(LOGIN_URL);
 
         log.info("输入用户名");
-        WebElement usernameInput = WebDriverUtil.waitUntilElementExist(driver, 10, By.id("loginName"));
+        WebElement usernameInput = WebDriverUtil.waitUntilElementExist(
+                driver, 10, By.cssSelector("#loginName"));
         usernameInput.click();
         usernameInput.sendKeys(username);
         waitSeconds(3);
 
         log.info("输入密码");
-        WebElement passwordInput = WebDriverUtil.forceGetElement(By.id("loginPassword"), driver);
+        WebElement passwordInput = WebDriverUtil.forceGetElement(By.cssSelector("#loginPassword"), driver);
         passwordInput.click();
         passwordInput.sendKeys(password);
         waitSeconds(3);
 
         log.info("点击登录");
-        WebElement loginBtn = WebDriverUtil.forceGetElement(By.id("loginAction"), driver);
+        WebElement loginBtn = WebDriverUtil.forceGetElement(By.cssSelector("#loginAction"), driver);
         loginBtn.click();
         waitSeconds(5);
 
@@ -334,7 +335,7 @@ public class WeiboOpUtil {
         WebDriverUtil.waitUntilElementExist(driver, 5, By.id("J_name"));
     }
 
-    public static void setNickName(WebDriver driver, String nickName){
+    public static String setNickName(WebDriver driver, String nickName) {
         initInfoEdit(driver);
         //修改昵称
         String handle = WebDriverUtil.openNewTab(driver, "https://m.weibo.cn/setting/nick");
@@ -368,6 +369,8 @@ public class WeiboOpUtil {
             nickName = GenerateInfoUtil.reAddSuffixToNickName(nickName);
             log.info("重新修改昵称为:{}", nickName);
         }
+
+        return nickName;
     }
 
     public static String setLocation(WebDriver driver, int province){
@@ -444,7 +447,6 @@ public class WeiboOpUtil {
         imgInput.sendKeys(imgPath);
         WebDriverUtil.forceGetElement(By.cssSelector("input[type=\"submit\"]"), driver).click();
         waitSeconds(5);
-        driver.close();
     }
 
 

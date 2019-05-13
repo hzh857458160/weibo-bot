@@ -54,7 +54,7 @@ public class GenerateInfoUtil {
      * @param tempName 原昵称
      * @return 添加后缀的昵称
      */
-    private static String addSuffixToNickName(String tempName){
+    public static String addSuffixToNickName(String tempName) {
         int ran = random.nextInt(Consts.NICKNAME_SUFFIX.length);
         return tempName + Consts.NICKNAME_SUFFIX[ran];
     }

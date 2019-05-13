@@ -59,7 +59,7 @@ public class WebDriverUtil {
             log.info("存在cookies");
             Set<Object> cookieSet = webDriverUtil.redisService.sGet(key);
             driver.get(url);
-            waitSeconds(1);
+            waitSeconds(3);
             for (Object obj : cookieSet){
                 WebDriverUtil.addCookie(driver, (Cookie) obj);
             }
@@ -77,7 +77,7 @@ public class WebDriverUtil {
 
     public static WebElement waitUntilElementExist(WebDriver driver, int waitMaxTime, By by) {
         return new WebDriverWait(driver, waitMaxTime)
-                .until(ExpectedConditions.presenceOfElementLocated(by));
+                .until(ExpectedConditions.visibilityOfElementLocated(by));
     }
 
     /**
@@ -328,6 +328,16 @@ public class WebDriverUtil {
         BufferedImage image = ImageIO.read(screen);
         int width = element.getSize().getWidth();
         int height = image.getHeight();
+        int x = element.getLocation().getX();
+        int y = 0;
+        return cutAndSaveImage(screen, x, y, width, height);
+    }
+
+    public static String getInfoSettingScreenShot(WebDriver driver) throws IOException {
+        WebElement element = WebDriverUtil.forceGetElement(By.cssSelector("#h5_page_wrap"), driver);
+        File screen = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+        int width = element.getSize().getWidth();
+        int height = element.getSize().getHeight();
         int x = element.getLocation().getX();
         int y = 0;
         return cutAndSaveImage(screen, x, y, width, height);
