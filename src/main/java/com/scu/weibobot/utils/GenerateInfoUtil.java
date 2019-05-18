@@ -328,72 +328,11 @@ public class GenerateInfoUtil {
      */
     public static String generatePostContent(WebDriver driver, String keyWord) {
         log.info("进入generatePostContent({})", keyWord);
-        String content = getContentByTouTiao(driver, keyWord);
+        String content = getContentByYiDian(driver, keyWord);
         if (content == null) {
-            content = getContentByYiDian(driver, keyWord);
-            if (content == null) {
-                content = getContentByBaiDu(driver, keyWord);
-            }
+            content = getContentByBaiDu(driver, keyWord);
         }
         return content;
-    }
-
-    private static String getContentByTouTiao(WebDriver driver, String keyWord) {
-        String url = "https://www.toutiao.com/ch/news_hot/";
-        String prePageHandle = driver.getWindowHandle();
-        System.out.println(prePageHandle);
-        String result = null;
-        try {
-            //打开新标签页，并切换，当前有两个标签页
-            String mainPageHandle = WebDriverUtil.openNewTab(driver, url);
-            System.out.println(mainPageHandle);
-            WebDriverUtil.changeWindowTo(driver, mainPageHandle);
-            WebElement searchBar = new WebDriverWait(driver, 5).until(ExpectedConditions
-                    .presenceOfElementLocated(By.cssSelector("input[name = 'keyword']")));
-            searchBar.click();
-            searchBar.sendKeys(keyWord);
-            waitSeconds(2);
-            WebDriverUtil.forceGetElement(By.cssSelector("button[type='submit']"), driver).click();
-            waitSeconds(3);
-
-            WebDriverUtil.changeWindow(driver, prePageHandle, mainPageHandle);
-            String searchPageHandle = driver.getWindowHandle();
-
-            WebElement verifyBox = WebDriverUtil.isElementExist(By.cssSelector("body > div > div.verify-container"), driver);
-            if (verifyBox != null) {
-                WebDriverUtil.changeWindowAndCloseOthers(driver, prePageHandle);
-                return null;
-            }
-            List<WebElement> articleList = WebDriverUtil.forceGetElementList(By.cssSelector("a.img-wrap > img:only-child"), driver);
-            log.info("获取到文章列表 size = {}", articleList.size());
-            Random random = new Random();
-            int ra = random.nextInt(articleList.size());
-            log.info("生成随机数为{}", ra);
-            articleList.get(ra).click();
-
-            WebDriverUtil.changeWindow(driver, prePageHandle, mainPageHandle, searchPageHandle);
-            waitSeconds(4);
-
-            List<WebElement> pList = driver.findElements(By.cssSelector("div.article-content > div > p"));
-
-            log.info("获取到文字列表 size = {}", pList.size());
-            for (int i = 0; i < pList.size(); i++) {
-                String text = pList.get(i).getText().trim();
-                if (!"".equals(text) && text.length() < 50) {
-                    result = text;
-                    break;
-                }
-            }
-            WebDriverUtil.changeWindowAndCloseOthers(driver, prePageHandle);
-            return result;
-
-        } catch (Exception e) {
-            WebDriverUtil.changeWindowAndCloseOthers(driver, prePageHandle);
-            return result;
-
-        }
-
-
     }
 
     private static String getContentByYiDian(WebDriver driver, String keyWord) {

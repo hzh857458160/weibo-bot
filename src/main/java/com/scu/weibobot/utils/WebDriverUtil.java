@@ -54,6 +54,7 @@ public class WebDriverUtil {
         webDriverUtil.redisService.sSetAndTime(key, time, cookieSet.toArray());
     }
 
+
     public static boolean getUrlWithCookie(WebDriver driver, String url, String key){
         if (isCookieExist(key)){
             log.info("存在cookies");
@@ -209,8 +210,9 @@ public class WebDriverUtil {
         String handle = driver.getWindowHandle();
         // 获取所有页面的句柄，并循环判断不是当前的句柄，就做选取switchTo()
         for (String handles : driver.getWindowHandles()) {
-            if (handles.equals(handle))
+            if (handles.equals(handle)) {
                 continue;
+            }
             driver.switchTo().window(handles);
         }
     }
@@ -309,20 +311,27 @@ public class WebDriverUtil {
         return jsExecute(driver, js, null);
     }
 
-    //TODO:将当前截图存入项目目录下，并返回截图地址
-    public static String getScreenShotFileName(WebDriver driver, WebElement element) throws IOException {
-        WebDriverUtil.scrollToElement(driver, element);
+    public static String screenShot4Common(WebDriver driver, WebElement element) throws IOException {
+        scrollToElement(driver, element);
         WrapsDriver wrapsDriver = (WrapsDriver) element;
         File screen = ((TakesScreenshot) wrapsDriver.getWrappedDriver()).getScreenshotAs(OutputType.FILE);
         BufferedImage image = ImageIO.read(screen);
         int width = element.getSize().getWidth();
         int height = element.getSize().getHeight();
-        int y = image.getHeight() - height;
         int x = element.getLocation().getX();
+        int y;
+        log.info("元素位置数据：{} + {} ? {}", element.getLocation().getY(), height, image.getHeight());
+        if (element.getLocation().getY() + height < image.getHeight()) {
+            //说明元素处在中部
+            y = element.getLocation().getY();
+        } else {
+            //说明元素处在底部
+            y = image.getHeight() - height;
+        }
         return cutAndSaveImage(screen, x, y, width, height);
     }
 
-    public static String getCommentScreenShot(WebDriver driver) throws IOException {
+    public static String screenShot4Comment(WebDriver driver) throws IOException {
         WebElement element = WebDriverUtil.forceGetElement(By.cssSelector("div.lite-page-tab"), driver);
         File screen = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
         BufferedImage image = ImageIO.read(screen);
@@ -333,7 +342,7 @@ public class WebDriverUtil {
         return cutAndSaveImage(screen, x, y, width, height);
     }
 
-    public static String getInfoSettingScreenShot(WebDriver driver) throws IOException {
+    public static String screenShot4InfoSet(WebDriver driver) throws IOException {
         WebElement element = WebDriverUtil.forceGetElement(By.cssSelector("#h5_page_wrap"), driver);
         File screen = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
         int width = element.getSize().getWidth();

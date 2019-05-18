@@ -97,7 +97,7 @@ public class WeiboBotExecutor implements Runnable {
                     waitSeconds((random.nextDouble() + 2.0));
                     WeiboOpUtil.likeWeibo(driver, weibo);
                     //截图
-                    String imgName = WebDriverUtil.getScreenShotFileName(driver, weibo);
+                    String imgName = WebDriverUtil.screenShot4Common(driver, weibo);
                     addMessage(pushMsg, "仔细阅读并点赞 " + weiboName + " 的微博", imgName);
                 } else {
                     //普通微博，简单阅读几秒
@@ -105,9 +105,20 @@ public class WeiboBotExecutor implements Runnable {
                 }
                 //20%的概率评论
                 if (getRandomNum() <= Consts.COMMENT_WEIBO_PROB) {
-                    String comment = commentWeibo(driver, weibo);
-                    weibo = WebDriverUtil.forceGetElement(getWeiboBy, driver);
-                    addMessage(pushMsg, "评论 " + weiboName + " 的微博：" + comment);
+                    //获取评论文本并评论
+                    String weiboContent = WeiboOpUtil.getWeiboText(weibo);
+                    String comment = GenerateInfoUtil.generateCommentByTencentAI(weiboContent);
+                    log.info("comment content: {}", comment);
+                    if ("".equals(comment)) {
+                        log.warn("comment fail, content is blank");
+                    } else {
+                        WeiboOpUtil.commentWeibo(driver, weibo, comment);
+                        //截图并返回
+                        WebDriverUtil.screenShot4Comment(driver);
+                        addMessage(pushMsg, "评论 " + weiboName + " 的微博：" + comment);
+                        WeiboOpUtil.backToMainPage(driver);
+                        weibo = WebDriverUtil.forceGetElement(getWeiboBy, driver);
+                    }
                 }
                 waitSeconds(1);
                 //20%的概率转发
@@ -115,7 +126,7 @@ public class WeiboBotExecutor implements Runnable {
                     WeiboOpUtil.reportWeibo(driver, weibo);
                     //获取刚发送的微博
                     WebElement recentWeibo = WeiboOpUtil.getRecentPostWeibo(driver);
-                    String imgPath = WebDriverUtil.getScreenShotFileName(driver, recentWeibo);
+                    String imgPath = WebDriverUtil.screenShot4Common(driver, recentWeibo);
                     WeiboOpUtil.backToMainPage(driver);
                     log.info("{} 转发{}的微博", nickName, weiboName);
                     addMessage(pushMsg, "转发 " + weiboName + " 的微博", imgPath);
@@ -147,7 +158,7 @@ public class WeiboBotExecutor implements Runnable {
             //获取刚发送的微博
             WebElement recentWeibo = WeiboOpUtil.getRecentPostWeibo(driver);
             //生成截图，并返回主页
-            String imgName = WebDriverUtil.getScreenShotFileName(driver, recentWeibo);
+            String imgName = WebDriverUtil.screenShot4Common(driver, recentWeibo);
             WeiboOpUtil.backToMainPage(driver);
             addMessage(pushMsg, "发送" + interest + "相关的微博：", imgName);
             waitSeconds(2);
@@ -156,24 +167,13 @@ public class WeiboBotExecutor implements Runnable {
         }
     }
 
-    private String commentWeibo(WebDriver driver, WebElement weibo) throws IOException {
-        //获取评论文本并评论
-        String weiboContent = WeiboOpUtil.getWeiboText(weibo);
-        String comment = GenerateInfoUtil.generateCommentByTencentAI(weiboContent);
-        WeiboOpUtil.commentWeibo(driver, weibo, comment);
-        //截图并返回
-        WebDriverUtil.getCommentScreenShot(driver);
-        WeiboOpUtil.backToMainPage(driver);
-        return comment;
-    }
-
     private String reportWeibo(WebDriver driver, WebElement weibo) throws IOException {
         //获取评论文本并评论
         String weiboContent = WeiboOpUtil.getWeiboText(weibo);
         String comment = GenerateInfoUtil.generateCommentByTencentAI(weiboContent);
         WeiboOpUtil.commentWeibo(driver, weibo, comment);
         //截图并返回
-        WebDriverUtil.getCommentScreenShot(driver);
+        WebDriverUtil.screenShot4Comment(driver);
         WeiboOpUtil.backToMainPage(driver);
         return comment;
     }
@@ -184,7 +184,7 @@ public class WeiboBotExecutor implements Runnable {
         pushMsg.setBody(msg);
         pushMsg.setTime(LocalTime.now());
         pushMsg.setAttach(attach);
-        MessageQueue.getInstance().push(pushMsg, botId);
+        MessageQueue.push(pushMsg, botId);
     }
 
     private void addMessage(PushMessage pushMsg, String msg) {

@@ -1,7 +1,6 @@
 var addBotKey = "";
 
 function postTest1() {
-    console.log("postTest1()")
     var warnTip = $("#warnTip");
     var failTip = $("#failTip");
     var successTip = $("#successTip");
@@ -45,6 +44,8 @@ function postTest1() {
                         failTip.text("添加账号失败，请稍后重试");
                     }
                     showAlert($(".alert.alert-danger"));
+                    $("#input-4").val("");
+                    $("#input-5").val("");
                     //取消显示警告提示，恢复按钮
                     submitBtn.attr("disabled", false);
                 }
@@ -56,8 +57,6 @@ function postTest1() {
 }
 
 function postTest2() {
-    console.log("postTest2()")
-    var warnTip = $("#warnTip");
     var failTip = $("#failTip");
     var successTip = $("#successTip");
     var submitBtn = $(".btn.btn-primary");
@@ -80,7 +79,7 @@ function postTest2() {
                     var botInfo = data.attach.botInfo;
                     console.log(botInfo);
                     var gender = botInfo.gender == 0 ? "男" : "女";
-                    var text = "生成身份信息成功，接下来将到微博中初始化账号...\n社交机器人信息( "
+                    var text = "生成身份信息成功，接下来将到微博中初始化账号...</br>社交机器人信息( "
                         + "初始昵称：" + botInfo.nickName
                         + " 性别：" + gender
                         + " 出生日期：" + botInfo.birthDate
@@ -99,8 +98,8 @@ function postTest2() {
                     }
                     showAlert(failTip);
                     //取消显示警告提示，恢复按钮
-                    // warnTip.text("");
-                    // warnTip.css('display', 'none');
+                    $("#input-4").val("");
+                    $("#input-5").val("");
                     submitBtn.attr("disabled", false);
                 }
             }, 2000);
@@ -111,7 +110,6 @@ function postTest2() {
 
 function postTest3() {
     console.log("postTest3()")
-    var warnTip = $("#warnTip");
     var failTip = $("#failTip");
     var successTip = $("#successTip");
     var submitBtn = $(".btn.btn-primary");
@@ -129,15 +127,16 @@ function postTest3() {
             console.log(data);
             setTimeout(function () {
                 //取消显示警告提示，恢复按钮
-                // warnTip.text("");
-                // warnTip.css('display', 'none');
                 submitBtn.attr("disabled", false);
                 //根据结果处理成功失败提示提示
                 if (data.code === "0") {
                     successTip.text("添加账号成功!");
                     var screen = data.attach.screen;
+                    $('.modal-dialog').empty();
+                    $('.modal-dialog').append(getImage(screen));
+
+                    var text1 = "<a href=\"#\" target=\"_blank\" data-toggle=\"modal\"\n data-target=\"#myModal\" >查看微博信息设置截图</a>";
                     var botId = data.attach.botId;
-                    var text1 = "<a href=\"/static/img/screenshots/" + screen + "\" target=\"_blank\" >查看微博信息设置截图</a>";
                     var text2 = "<a href=\"/weibo-bot/account?botId=" + botId + "\" target=\"_blank\" >查看新社交机器人信息</a>";
                     successTip.append(text1).append(" ").append(text2);
                     showAlert(successTip);
@@ -151,7 +150,8 @@ function postTest3() {
                     failTip.text("添加账号失败，请稍后重试");
                     showAlert(failTip);
                 }
-
+                $("#input-4").val("");
+                $("#input-5").val("");
             }, 2000);
         },
         "json"
@@ -229,7 +229,7 @@ function showAlert(alert) {
     alert.css('display', '');
     setTimeout(function () {
         alert.css('display', 'none');
-    }, 8000);
+    }, 15000);
 }
 
 function inputCheck() {
@@ -239,4 +239,24 @@ function inputCheck() {
         return false;
     }
     return true;
+}
+
+function getImage(imgName) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("get", "/weibo-bot/image?imgName=" + imgName, true);
+    xhr.responseType = "blob";
+    xhr.setRequestHeader('Access-Control-Allow-Headers', 'Content-Type, Content-Length, Authorization, Accept, X-Requested-With , yourHeaderFeild');
+    xhr.onload = function () {
+        if (this.status == 200) {
+            console.log(this);
+            var blob = this.response;
+            var img = document.createElement("img");
+            img.onload = function () {
+                window.URL.revokeObjectURL(img.src);
+            };
+            img.src = window.URL.createObjectURL(blob);
+            $(".modal-dialog").append(img);
+        }
+    };
+    xhr.send();
 }

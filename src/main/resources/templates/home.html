@@ -109,7 +109,6 @@
     </section> <!--End off Home Sections-->
 
     <section id="addBot" class="content">
-        <!--<hr style="height:1px;border:none;border-top:1px solid #875EA2;" />-->
     </section>
     <div class="content container">
         <div class="section_header" style="margin-bottom: 80px">
@@ -131,13 +130,19 @@
         <div class="m-top-80" style="margin-bottom: 80px">
             <button type="button" class="btn btn-primary" onclick="postTest1()">确认添加</button>
         </div>
-        <div class="m-top-80">
+        <div class="m-top-40">
             <div id="successTip" class="alert alert-success alert-dismissible" style="display: none" role="alert"></div>
             <div id="failTip" class="alert alert-danger alert-dismissible" style="display: none" role="alert"></div>
             <div id="warnTip" class="alert alert-warning alert-dismissible" style="display: none" role="alert"></div>
         </div>
     </div>
 
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+
+        </div>
+    </div>
 
     <hr style="height:1px;border:none;border-top:1px solid #875EA2;"/>
 
@@ -199,7 +204,6 @@
 
 <script>
     (function () {
-        // trim polyfill : https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/Trim
         if (!String.prototype.trim) {
             (function () {
                 // Make sure we trim BOM and NBSP
@@ -232,85 +236,6 @@
         }
     })();
 
-    // function postAccount() {
-    //     var warnTip = $("#warnTip");
-    //     var failTip = $("#failTip");
-    //     var successTip = $("#successTip");
-    //     var submitBtn = $(".btn.btn-primary");
-    //
-    //     //输入框检查
-    //     if (!inputCheck()) {
-    //         warnTip.text("(用户名或密码不能为空！)");
-    //         warnTip.css('display', '');
-    //         return;
-    //     }
-    //     //禁用按钮，并提示等待
-    //     submitBtn.attr("disabled", true);
-    //     warnTip.text("(正在添加账号，请稍等，这可能需要一段时间...)");
-    //     warnTip.css('display', '');
-    //
-    //     //flag作为最后成功失败的标志
-    //     var code = "12";
-    //     var attach = "";
-    //     try {
-    //         $.post(
-    //             "/weibo-bot/account",
-    //             {
-    //                 username: $("#input-4").val().trim(),
-    //                 password: $("#input-5").val().trim()
-    //             },
-    //             function (data) {
-    //                 console.log(data);
-    //                 code = data.code;
-    //                 attach = data.attach;
-    //             },
-    //             "json"
-    //         );
-    //     } finally {
-    //         setTimeout(function () {
-    //             //取消显示警告提示，恢复按钮
-    //             warnTip.text("");
-    //             warnTip.css('display', 'none');
-    //             submitBtn.attr("disabled", false);
-    //             //根据结果处理成功失败提示提示
-    //             if (code === "0") {
-    //                 successTip.text("添加账号成功！");
-    //                 var text = "<a href=\"/weibo-bot/account?botId=" + attach + "\" target=\"_blank\" >点击此处查看新社交机器人信息</a>";
-    //                 successTip.append(text);
-    //                 showAlert($(".alert.alert-success"));
-    //                 $("#input-4").val("");
-    //                 $("#input-5").val("");
-    //
-    //             } else if (code === "10") {
-    //                 failTip.text("添加账号失败，账号密码有误，请确认后重试");
-    //                 showAlert($(".alert.alert-danger"));
-    //
-    //             } else {
-    //                 failTip.text("添加账号失败，请稍后重试");
-    //                 showAlert($(".alert.alert-danger"));
-    //             }
-    //         }, 2000);
-    //
-    //     }
-    //
-    //
-    // }
-    //
-    // function showAlert(alert) {
-    //     alert.css('display', '');
-    //     setTimeout(function () {
-    //         alert.css('display', 'none');
-    //     }, 8000);
-    // }
-    //
-    // function inputCheck() {
-    //     var username = $("#input-4").val().trim();
-    //     var password = $("#input-5").val().trim();
-    //     if (username === "" || password === "") {
-    //         return false;
-    //     }
-    //     return true;
-    // }
 </script>
 <style>
     .section_header {

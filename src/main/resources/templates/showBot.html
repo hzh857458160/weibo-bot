@@ -86,7 +86,7 @@
     } else {
         var url = "ws://localhost:8080/weibo-bot/websocket/" + $("#botId").text();
         socket = new WebSocket(url);
-        // socket = new WebSocket("ws://localhost:8080/weibo-bot/websocket");
+
         //打开事件
         socket.onopen = function () {
             // socket.send($("#botId").text());
@@ -94,17 +94,37 @@
         //获得消息事件
         socket.onmessage = function (event) {
             //发现消息进入
-            console.log(event.data);
             var obj = eval('(' + event.data + ')');
             var q = $(".panel-body");
             var text = "<p class='panel-text'>" + obj.msg + ":</p>";
-            if (event.data.attach !== "") {
-                text = text + "<img class='panel-img' alt='' src=\"/weibo-bot/static/img/screenshots/" + obj.attach + "\"/>";
+            var imgName = obj.attach;
+            if (imgName !== undefined) {
+                getImage(imgName, text);
+
+            } else {
+                q.prepend(text + "\n");
             }
-            q.prepend(text + "\n");
         };
     }
 
+
+    function getImage(imgName, text) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("get", "/weibo-bot/image?imgName=" + imgName, true);
+        xhr.responseType = "blob";
+        xhr.setRequestHeader('Access-Control-Allow-Headers', 'Content-Type, Content-Length, Authorization, Accept, X-Requested-With , yourHeaderFeild');
+        xhr.onload = function () {
+            if (this.status == 200) {
+                console.log(this);
+                var blob = this.response;
+                var url = window.URL.createObjectURL(blob);
+                var img = "<img src='" + url + "' alt='' class='panel-img'>";
+                text += img;
+                $(".panel-body").prepend(text + "\n");
+            }
+        };
+        xhr.send();
+    }
     function parseWeiboBot() {
         $.post(
             "/weibo-bot/pause/",

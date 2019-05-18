@@ -5,16 +5,19 @@ import com.scu.weibobot.domain.WeiboAccount;
 import com.scu.weibobot.domain.pojo.WeiboUser;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
-import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.Select;
 
-import java.io.IOException;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 import static com.scu.weibobot.utils.WebDriverUtil.waitSeconds;
 
 
+/**
+ * @author HanrAx
+ */
 @Slf4j
 public class WeiboOpUtil {
     private static final String LOGIN_URL = "https://passport.weibo.cn/signin/login";
@@ -29,6 +32,7 @@ public class WeiboOpUtil {
     public static boolean loginWeibo(WebDriver driver, WeiboAccount account) {
         return loginWeibo(driver, account.getUsername(), account.getPassword());
     }
+
     /**
      * 登陆微博
      * @param driver
@@ -39,7 +43,11 @@ public class WeiboOpUtil {
     public static boolean loginWeibo(WebDriver driver, String username, String password) {
         log.info("查看是否存有cookie");
         if (WebDriverUtil.getUrlWithCookie(driver, BASE_URL, username)) {
-            return true;
+            WebElement element = WebDriverUtil.isElementExist(By.cssSelector("div.lite-enter-btns > a"), driver);
+            if (element == null) {
+                return true;
+            }
+            driver.manage().deleteAllCookies();
         }
         log.info("登录微博，账号为{}", username);
         driver.get(LOGIN_URL);
@@ -74,11 +82,7 @@ public class WeiboOpUtil {
         String secureUrl = "security.weibo.com/captcha/geetest";
         while (driver.getCurrentUrl().contains(secureUrl)) {
             log.info("受到微博限制，进入身份验证");
-            WebElement checkBtn = WebDriverUtil.forceGetElement(By.id("embed-captcha"), driver);
-            Actions actions = new Actions(driver);
-            actions.moveToElement(checkBtn);
-            actions.click();
-            waitSeconds(8);
+            waitSeconds(5);
         }
 
         log.info("成功登陆到m.weibo.cn");
@@ -150,7 +154,6 @@ public class WeiboOpUtil {
             WebDriverUtil.forceGetElement(By.cssSelector("button.btn-send"), driver).click();
         }
         waitSeconds(4);
-
     }
 
     public static void reportWeibo(WebDriver driver, WebElement weibo) {
@@ -222,6 +225,7 @@ public class WeiboOpUtil {
         WebDriverUtil.forceGetElement(By.cssSelector("a.m-send-btn"), driver).click();
         waitSeconds(1);
     }
+
     /**
      * 点赞对应微博
      * @param driver
@@ -236,8 +240,6 @@ public class WeiboOpUtil {
     }
 
     public static List<WeiboUser> subscribeWeiboByInterest(WebDriver driver, List<String> interestList) {
-        String handle = WebDriverUtil.openNewTab(driver, BASE_URL);
-        WebDriverUtil.changeWindowTo(driver, handle);
         if (interestList == null) {
             log.error("list == null");
             throw new RuntimeException("interestList is null");
@@ -246,39 +248,42 @@ public class WeiboOpUtil {
             log.error("list size = 0");
             throw new RuntimeException("interestList size is 0");
         }
-        log.info("当前url为：{}", driver.getCurrentUrl());
+        String handle = WebDriverUtil.openNewTab(driver, BASE_URL);
+        WebDriverUtil.changeWindowTo(driver, handle);
+        waitSeconds(3);
         //先点击一次搜索框，转到搜索页
-        WebElement preSearchBar = WebDriverUtil.forceGetElement(By.cssSelector("label.m-search"), driver);
-        preSearchBar.click();
-        while (!driver.getCurrentUrl().contains("search?containerid")) {
-            waitSeconds(2);
-        }
-        WebElement searchBar;
+        WebDriverUtil.forceGetElement(By.cssSelector("aside > label > div"), driver).click();
+
+        By inputBy = By.cssSelector("input[type = 'search']");
+        By userTabBy = By.cssSelector("ul > li:nth-child(2) > span");
         List<WeiboUser> weiboUserList = new ArrayList<>(200);
         for (String interest : interestList) {
             //再点击一次搜索框，并输入相关爱好，并回车
-            searchBar = WebDriverUtil.forceGetElement(By.cssSelector("input[type = 'search']"), driver);
+            WebElement searchBar = WebDriverUtil.forceGetElement(inputBy, driver);
             searchBar.clear();
             searchBar.click();
+            waitSeconds(2);
             searchBar.sendKeys(interest);
             searchBar.sendKeys(Keys.ENTER);
             waitSeconds(3);
-
             //点击用户标签页，等待跳转
-            WebDriverUtil.forceGetElement(By.cssSelector("ul.nav-item.center > li:nth-child(2)"), driver).click();
+            WebDriverUtil.forceGetElement(userTabBy, driver).click();
             waitSeconds(3);
 
+            WebDriverUtil.scrollToBottom(driver);
+            waitSeconds(2);
             List<WebElement> subscribeList = WebDriverUtil.forceGetElementList(
-                    By.cssSelector("div.card-main"), driver);
-            String jsClick = "arguments[0].click();";
-            for (int i = 1; i <= 25; i++) {
-                if (subscribeList.size() == i) {
-                    subscribeList = WebDriverUtil.forceGetElementList(By.cssSelector("div.card-main"), driver);
+                    By.cssSelector("div.card-list > div"), driver);
+            int i = 1;
+            for (WebElement tempElement : subscribeList) {
+                if (i % 5 == 0) {
+                    double d = new Random().nextDouble() * 2 + 2;
+                    waitSeconds(d);
                 }
-                WebElement tempElement = subscribeList.get(i);
+                i++;
+
                 WebDriverUtil.scrollToElement(driver, tempElement);
-                String fansNum = WebDriverUtil.forceGetElement(
-                        By.cssSelector("div.m-text-box > h4:nth-child(3)"), tempElement).getText();
+                String fansNum = tempElement.findElement(By.cssSelector("div.m-text-box > h4:nth-child(3)")).getText();
                 if (!fansNum.contains("万")) {
                     waitSeconds(1);
                     continue;
@@ -288,19 +293,20 @@ public class WeiboOpUtil {
                     waitSeconds(1);
                     continue;
                 }
-                String addTip = WebDriverUtil.forceGetElement(By.cssSelector("h4"), addBox).getText();
-                if (addTip.equals("加关注")) {
-                    WebDriverUtil.jsExecute(driver, jsClick, addBox);
-                    waitSeconds(1);
+                String addTip = addBox.findElement(By.cssSelector("h4")).getText();
+                if ("加关注".equals(addTip)) {
+                    WebDriverUtil.jsClick(driver, addBox);
+                    waitSeconds(2);
                 }
                 String imgSrc = WebDriverUtil.forceGetElement(By.cssSelector("div.m-img-box > img")
                         , tempElement).getAttribute("src");
-                String nickName = WebDriverUtil.forceGetElement(By.cssSelector("div.m-box-col.m-box-dir.m-box-center > div > h3 > span")
-                        , tempElement).getText();
-                String intro = WebDriverUtil.forceGetElement(By.cssSelector("div.m-box-col.m-box-dir.m-box-center > div > h4:nth-child(2)")
-                        , tempElement).getText();
+                String nickName = WebDriverUtil.forceGetElement(By.cssSelector(
+                        "div.m-box-col.m-box-dir.m-box-center > div > h3 > span"), tempElement).getText();
+                String intro = WebDriverUtil.forceGetElement(By.cssSelector(
+                        "div.m-box-col.m-box-dir.m-box-center > div > h4:nth-child(2)"), tempElement).getText();
                 WeiboUser weiboUser = new WeiboUser(imgSrc, nickName, intro);
                 weiboUserList.add(weiboUser);
+                waitSeconds(1);
             }
         }
 
@@ -312,9 +318,7 @@ public class WeiboOpUtil {
         WebElement element = WebDriverUtil.forceGetElement(By.cssSelector("div.nav-left.lite-iconf.lite-iconf-profile"), driver);
         WebDriverUtil.jsClick(driver, element);
         waitSeconds(3);
-        WebElement selfWeibo = WebDriverUtil.forceGetElementList(By.cssSelector("div.wb-item-wrap"), driver).get(0);
-        WebDriverUtil.scrollToElement(driver, selfWeibo);
-        return selfWeibo;
+        return WebDriverUtil.forceGetElementList(By.cssSelector("div.wb-item-wrap"), driver).get(0);
     }
 
 
@@ -327,10 +331,9 @@ public class WeiboOpUtil {
             return;
         }
         By userCenterBy = By.cssSelector("div.nav-left.lite-iconf.lite-iconf-profile");
-        WebElement userCenterBtn = WebDriverUtil.forceGetElement(userCenterBy, driver);
-        userCenterBtn.click();
-        waitSeconds(2);
-        WebElement editDataBtn = driver.findElement(By.cssSelector("div.bar-btn.m-box-col > a"));
+        WebDriverUtil.forceGetElement(userCenterBy, driver).click();
+        WebElement editDataBtn = WebDriverUtil.waitUntilElementExist(driver, 5
+                , By.cssSelector("div.bar-btn.m-box-col > a"));
         driver.get(editDataBtn.getAttribute("href"));
         WebDriverUtil.waitUntilElementExist(driver, 5, By.id("J_name"));
     }

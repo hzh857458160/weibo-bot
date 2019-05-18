@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.websocket.*;
+import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.Map;
@@ -20,12 +21,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * Date: 2019/03/09
  **/
 @Component
-@ServerEndpoint("/websocket")
+@ServerEndpoint("/websocket/{botId}")
 @Slf4j
 public class WebSocketServer {
 
     //concurrent包的线程安全Set，用来存放每个客户端对应的MyWebSocket对象。若要实现服务端与单一客户端通信的话，可以使用Map来存放，其中Key可以为用户标识
-    private static Map<String, Session> map = new ConcurrentHashMap<>();
+//    private static Map<Long, Session> map = new ConcurrentHashMap<>();
 
     @Autowired
     private ThreadPoolTaskExecutor taskExecutor;
@@ -44,8 +45,11 @@ public class WebSocketServer {
      * 收到新连接关闭调用的方法
      */
     @OnOpen
-    public void onOpen(Session session) {
-        log.info("有新连接加入！");
+    public void onOpen(Session session, @PathParam("botId") String botId) {
+        log.info("新连接加入：[botId:{}]", botId);
+        Long id = Long.valueOf(botId);
+//        map.put(id, session);
+        webSocketServer.taskExecutor.execute(pushLogger(id, session));
     }
 
     /**
@@ -67,8 +71,6 @@ public class WebSocketServer {
     @OnMessage
     public void onMessage(String message, Session session) {
         log.info("来自客户端的消息:" + message);
-        map.put(message, session);
-        webSocketServer.taskExecutor.execute(pushLogger(Long.valueOf(message), session));
 
     }
 
@@ -97,11 +99,15 @@ public class WebSocketServer {
      */
     private Runnable pushLogger(Long botId, Session session) {
         log.info("pushLogger({}, {})", botId, session);
-        Runnable runnable = () -> {
+        return () -> {
             boolean flag = true;
             while (flag) {
                 try {
-                    PushMessage pushMessage = MessageQueue.getInstance().poll(botId);
+                    PushMessage pushMessage = MessageQueue.poll(botId);
+                    if (pushMessage == null) {
+                        Thread.sleep(2000);
+                        continue;
+                    }
                     log.info("push logger : {}", pushMessage);
                     sendMessage(pushMessage.toJSON(), session);
 
@@ -112,7 +118,6 @@ public class WebSocketServer {
                 }
             }
         };
-        return runnable;
 
     }
 
