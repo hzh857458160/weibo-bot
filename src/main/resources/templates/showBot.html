@@ -37,7 +37,7 @@
                 <a href="#" onclick="getSubscribeList()" class="button big scrolly" data-toggle="modal"
                    data-target="#myModal">查看关注列表</a>
                 <a id="pauseBtn" onclick="parseWeiboBot()" href="javascript:void(0);"
-                   class="button big scrolly">暂停机器人运行</a>
+                   class="button big scrolly" th:text="${pauseBtn}"></a>
                 <p id="pauseTip"></p>
             </div>
         </div>
@@ -115,7 +115,7 @@
         xhr.setRequestHeader('Access-Control-Allow-Headers', 'Content-Type, Content-Length, Authorization, Accept, X-Requested-With , yourHeaderFeild');
         xhr.onload = function () {
             if (this.status == 200) {
-                console.log(this);
+                // console.log(this);
                 var blob = this.response;
                 var url = window.URL.createObjectURL(blob);
                 var img = "<img src='" + url + "' alt='' class='panel-img'>";
@@ -125,24 +125,35 @@
         };
         xhr.send();
     }
+
     function parseWeiboBot() {
+        var tip = $("#pauseTip");
+        var btn = $("#pauseBtn");
+
+        var text = btn.text();
+        if (text === "暂停机器人运行") {
+            tip.text("");
+            tip.text("暂停成功！");
+            btn.text("恢复机器人运行");
+        } else {
+            tip.text("");
+            tip.text("恢复成功！");
+            btn.text("暂停机器人运行");
+        }
+
         $.post(
             "/weibo-bot/pause/",
             {
                 "botId": $("#botId").text()
             },
             function () {
-                var text = $("#pauseBtn").text();
-                if (text === "暂停机器人运行") {
-                    $("#pauseTip").text("暂停成功！");
-                    $("#pauseBtn").text("恢复机器人运行");
-                } else {
-                    $("#pauseTip").text("恢复成功！");
-                    $("#pauseBtn").text("暂停机器人运行");
-                }
             },
             "json"
         );
+
+        setTimeout(function () {
+            tip.text("");
+        }, 8000);
     }
 
     function getSubscribeList() {

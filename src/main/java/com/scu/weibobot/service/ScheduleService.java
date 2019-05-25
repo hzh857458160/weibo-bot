@@ -45,6 +45,7 @@ public class ScheduleService {
         //获取所有可用的微博机器人账号
         List<WeiboAccount> weiboAccountList = accountService.findAllAccount();
         //根据账号去寻找对应的资料
+        int i = 0;
         for (WeiboAccount account : weiboAccountList) {
             BotInfo botInfo = botInfoService.findBotInfoByAccountId(account.getAccountId());
             if (readyToStart(botInfo)) {
@@ -54,13 +55,24 @@ public class ScheduleService {
                 botExecutor.setWeiboAccount(account);
                 botExecutor.setBotInfoService(botInfoService);
                 //使用线程池调用WeiboBotExecuter的run方法
+                if (i % 3 == 0) {
+                    waitSeconds(10);
+                }
+                i++;
                 taskExecutor.execute(botExecutor);
-                waitSeconds(2);
             } else {
                 log.info("bot{}尚未达到概率", botInfo.getBotId());
             }
-
         }
+
+//        WeiboAccount account = accountService.findByUsername("17716144642");
+//        BotInfo botInfo = botInfoService.findBotInfoByAccountId(account.getAccountId());
+//        WeiboBotExecutor botExecutor = new WeiboBotExecutor();
+//        botExecutor.setBotInfo(botInfo);
+//        botExecutor.setWeiboAccount(account);
+//        botExecutor.setBotInfoService(botInfoService);
+//        taskExecutor.execute(botExecutor);
+//        waitSeconds(5);
 
     }
 

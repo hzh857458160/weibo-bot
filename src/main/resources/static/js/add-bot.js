@@ -25,7 +25,6 @@ function postTest1() {
             password: $("#input-5").val().trim()
         },
         function (data) {
-            console.log(data);
             setTimeout(function () {
                 warnTip.text("");
                 warnTip.css('display', 'none');
@@ -61,23 +60,16 @@ function postTest2() {
     var successTip = $("#successTip");
     var submitBtn = $(".btn.btn-primary");
 
-    // successTip.text("");
-    // successTip.css('display', 'none');
-    // warnTip.css('display', '');
-    // warnTip.text("(正在生成社交机器人信息，请稍等...)");
-
     $.post(
         "/weibo-bot/test2",
         {
             "key": addBotKey
         },
         function (data) {
-            console.log(data);
             setTimeout(function () {
                 //根据结果处理成功失败提示提示
                 if (data.code === "0") {
                     var botInfo = data.attach.botInfo;
-                    console.log(botInfo);
                     var gender = botInfo.gender == 0 ? "男" : "女";
                     var text = "生成身份信息成功，接下来将到微博中初始化账号...</br>社交机器人信息( "
                         + "初始昵称：" + botInfo.nickName
@@ -87,10 +79,12 @@ function postTest2() {
                         + " 机器人等级：" + botInfo.botLevel
                         + ")";
                     successTip.text("");
-                    successTip.text(text);
+                    successTip.html(text);
                     postTest3();
 
                 } else {
+                    successTip.text("");
+                    successTip.css('display', 'none');
                     if (data.code === "101") {
                         failTip.text("操作有误，您不在当前操作队列中");
                     } else {
@@ -114,20 +108,17 @@ function postTest3() {
     var successTip = $("#successTip");
     var submitBtn = $(".btn.btn-primary");
 
-    // //flag作为最后成功失败的标志
-    // warnTip.css('display', '');
-    // warnTip.text("(正在微博中设置机器人信息，请稍等...)");
-
     $.post(
         "/weibo-bot/test3",
         {
             "key": addBotKey
         },
         function (data) {
-            console.log(data);
             setTimeout(function () {
                 //取消显示警告提示，恢复按钮
                 submitBtn.attr("disabled", false);
+                $("#input-4").val("");
+                $("#input-5").val("");
                 //根据结果处理成功失败提示提示
                 if (data.code === "0") {
                     successTip.text("添加账号成功!");
@@ -140,18 +131,19 @@ function postTest3() {
                     var text2 = "<a href=\"/weibo-bot/account?botId=" + botId + "\" target=\"_blank\" >查看新社交机器人信息</a>";
                     successTip.append(text1).append(" ").append(text2);
                     showAlert(successTip);
-                    console.log(botInfo);
 
                 } else if (data.code === "101") {
                     failTip.text("操作有误，您不在当前操作队列中");
                     showAlert(failTip);
+                    successTip.text("");
+                    successTip.css('display', 'none');
 
                 } else {
                     failTip.text("添加账号失败，请稍后重试");
                     showAlert(failTip);
+                    successTip.text("");
+                    successTip.css('display', 'none');
                 }
-                $("#input-4").val("");
-                $("#input-5").val("");
             }, 2000);
         },
         "json"
@@ -248,7 +240,6 @@ function getImage(imgName) {
     xhr.setRequestHeader('Access-Control-Allow-Headers', 'Content-Type, Content-Length, Authorization, Accept, X-Requested-With , yourHeaderFeild');
     xhr.onload = function () {
         if (this.status == 200) {
-            console.log(this);
             var blob = this.response;
             var img = document.createElement("img");
             img.onload = function () {

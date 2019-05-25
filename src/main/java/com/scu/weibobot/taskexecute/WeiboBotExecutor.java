@@ -8,7 +8,7 @@ import com.scu.weibobot.service.BotInfoService;
 import com.scu.weibobot.utils.GenerateInfoUtil;
 import com.scu.weibobot.utils.WebDriverUtil;
 import com.scu.weibobot.utils.WeiboOpUtil;
-import com.scu.weibobot.websocket.MessageQueue;
+import com.scu.weibobot.websocket.RedisMq;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -34,6 +34,7 @@ public class WeiboBotExecutor implements Runnable {
     private BotInfoService botInfoService;
     private Random random = new Random();
     private String nickName;
+    private RedisMq redisMq = new RedisMq();
 
     public void setBotInfo(BotInfo botInfo) {
         this.botInfo = botInfo;
@@ -61,6 +62,7 @@ public class WeiboBotExecutor implements Runnable {
     private void doSomethingInWeibo() {
         //修改运行状态
         botInfoService.updateStatusByBotId(botInfo.getBotId(), 0);
+        redisMq.clearList(botInfo.getBotId() + "");
         WebDriver driver = null;
         //初始化推送日志
         PushMessage pushMsg = new PushMessage();
@@ -84,7 +86,7 @@ public class WeiboBotExecutor implements Runnable {
             //开始遍历微博列表
             String findWeibo = "div.wb-item-wrap:nth-child(INDEX)";
             addMessage(pushMsg, "开始阅读微博");
-            for (int i = 1; i <= 20; i++) {
+            for (int i = 1; i < 20; i++) {
                 By getWeiboBy = By.cssSelector(findWeibo.replace("INDEX", i + ""));
                 WebElement weibo = WebDriverUtil.forceGetElement(getWeiboBy, driver);
                 WebDriverUtil.scrollToElement(driver, weibo);
@@ -114,10 +116,11 @@ public class WeiboBotExecutor implements Runnable {
                     } else {
                         WeiboOpUtil.commentWeibo(driver, weibo, comment);
                         //截图并返回
-                        WebDriverUtil.screenShot4Comment(driver);
-                        addMessage(pushMsg, "评论 " + weiboName + " 的微博：" + comment);
+                        String screenshot = WebDriverUtil.screenShot4Comment(driver);
+                        addMessage(pushMsg, "评论 " + weiboName + " 的微博：" + comment, screenshot);
                         WeiboOpUtil.backToMainPage(driver);
                         weibo = WebDriverUtil.forceGetElement(getWeiboBy, driver);
+
                     }
                 }
                 waitSeconds(1);
@@ -167,24 +170,14 @@ public class WeiboBotExecutor implements Runnable {
         }
     }
 
-    private String reportWeibo(WebDriver driver, WebElement weibo) throws IOException {
-        //获取评论文本并评论
-        String weiboContent = WeiboOpUtil.getWeiboText(weibo);
-        String comment = GenerateInfoUtil.generateCommentByTencentAI(weiboContent);
-        WeiboOpUtil.commentWeibo(driver, weibo, comment);
-        //截图并返回
-        WebDriverUtil.screenShot4Comment(driver);
-        WeiboOpUtil.backToMainPage(driver);
-        return comment;
-    }
-
     private void addMessage(PushMessage pushMsg, String msg, String attach) {
         log.info("{} " + msg, nickName);
         Long botId = pushMsg.getBotInfo().getBotId();
         pushMsg.setBody(msg);
         pushMsg.setTime(LocalTime.now());
         pushMsg.setAttach(attach);
-        MessageQueue.push(pushMsg, botId);
+        redisMq.push(botId + "", pushMsg.toJSON());
+//        MessageQueue.push(pushMsg, botId);
     }
 
     private void addMessage(PushMessage pushMsg, String msg) {

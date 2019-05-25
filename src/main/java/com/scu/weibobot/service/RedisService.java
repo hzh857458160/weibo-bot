@@ -386,6 +386,29 @@ public class RedisService {
         }
     }
 
+    public boolean lPush(String key, Object value) {
+        try {
+            String actualKey = KEY_PREFIX + key;
+            redisTemplate.opsForList().leftPush(actualKey, value);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public String lPop(String key) {
+        try {
+            String actualKey = KEY_PREFIX + key;
+            return (String) redisTemplate.opsForList().rightPop(KEY_PREFIX + key, 30, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
+
     // ================================HashMap=================================
     public Object hGet(String key, String hashKey) {
         try {

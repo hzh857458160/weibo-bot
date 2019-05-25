@@ -17,7 +17,7 @@ public class Consts {
     public static final String[] INTERESTS_GIRL = {"瑜伽", "烘焙", "舞蹈", "追星", "化妆", "八卦"};
     public static final String[] INTERESTS_NEUTRAL = {"唱歌", "家居", "搞笑", "经济", "艺术", "读书", "美食",
             "动漫", "摄影", "旅行", "游戏", "健身", "设计", "法律", "电影", "音乐", "综艺", "小说", "投资",
-            "电视剧", "综艺", "新闻", "绘画"};
+            "电视剧", "新闻", "绘画"};
     public static final String[] INTERESTS_BOY = {"运动", "足球", "汽车", "篮球", "数码", "体育",
             "科学", "街拍", "围棋", "搏击", "嘻哈"};
 
@@ -31,7 +31,7 @@ public class Consts {
 //            "com.alibaba.android.rimet/10487439 Channel/227200 language/zh-CN'";
 
     //每到整点会运行
-    public static final String RUN_PER_HOUR_CRON = " 0 0 * * *  ?";
+    public static final String RUN_PER_HOUR_CRON = " 0 30 * * *  ?";
 
     //不同使用度之间的时间点数
     public static final int[] VERY_HIGH_ACTIVE_TIME = {12, 13, 14, 19, 20, 21, 22, 23};

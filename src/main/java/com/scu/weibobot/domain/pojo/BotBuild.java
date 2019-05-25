@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.openqa.selenium.WebDriver;
 
 /**
  * ClassName:BotBuild
@@ -23,4 +24,6 @@ public class BotBuild {
     private WeiboAccount account;
 
     private BotInfo info;
+
+    private WebDriver driver;
 }

@@ -320,7 +320,7 @@ public class WebDriverUtil {
         int height = element.getSize().getHeight();
         int x = element.getLocation().getX();
         int y;
-        log.info("元素位置数据：{} + {} ? {}", element.getLocation().getY(), height, image.getHeight());
+//        log.info("元素位置数据：{} + {} ? {}", element.getLocation().getY(), height, image.getHeight());
         if (element.getLocation().getY() + height < image.getHeight()) {
             //说明元素处在中部
             y = element.getLocation().getY();
@@ -352,6 +352,7 @@ public class WebDriverUtil {
         return cutAndSaveImage(screen, x, y, width, height);
     }
 
+    //TODO：截图给名称
     private static String cutAndSaveImage(File screen, int x, int y, int width, int height) throws IOException {
         BufferedImage image = ImageIO.read(screen);
         BufferedImage img = image.getSubimage(x, y, width, height);

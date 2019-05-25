@@ -17,24 +17,24 @@ import com.scu.weibobot.utils.GenerateInfoUtil;
 import com.scu.weibobot.utils.HttpUtil;
 import com.scu.weibobot.utils.WebDriverUtil;
 import com.scu.weibobot.utils.WeiboOpUtil;
-import com.scu.weibobot.websocket.MessageQueue;
+import com.scu.weibobot.websocket.RedisMq;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.filters.WebdavFixFilter;
-import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.util.ClassUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -56,6 +56,8 @@ public class MainController {
     private BotInfoService botInfoService;
     @Autowired
     private RedisService redisService;
+    @Autowired
+    private ThreadPoolTaskExecutor taskExecutor;
 
     private static final String SUBSCRIBE_LIST_KEY = "SubscribeList";
     private static final String HEAD_IMG_SAVE_PATH = "D:\\idea-project\\weibo-bot\\src\\main\\resources\\static\\img\\headimg\\";
@@ -158,6 +160,22 @@ public class MainController {
     }
 
 
+    @GetMapping("/image")
+    public void getImg(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setContentType("image/png");
+        String imgName = request.getParameter("imgName");
+        String imgPath = "D:\\idea-project\\weibo-bot\\src\\main\\resources\\static\\img\\screenshots\\" + imgName;
+        File file = new File(imgPath);
+        BufferedImage image = ImageIO.read(file);
+        OutputStream os = response.getOutputStream();
+        ImageIO.write(image, "png", os);
+        os.flush();
+        os.close();
+    }
+
+
     @GetMapping("/index")
     public String index(Model model) {
         List<BotInfo> botList = botInfoService.finaAll();
@@ -190,6 +208,17 @@ public class MainController {
         }
         Long id = Long.valueOf(botId);
         Optional<BotInfo> optBotInfo = botInfoService.findBotInfoById(id);
+        if (optBotInfo.isPresent()) {
+            BotInfo botInfo = optBotInfo.get();
+            model.addAttribute("bot", botInfo);
+            String pauseBtn;
+            if (botInfo.getStatus() == 2) {
+                pauseBtn = "恢复机器人运行";
+            } else {
+                pauseBtn = "暂停机器人运行";
+            }
+            model.addAttribute("pauseBtn", pauseBtn);
+        }
         optBotInfo.ifPresent(botInfo -> model.addAttribute("bot", botInfo));
         return "showBot";
     }
@@ -273,6 +302,7 @@ public class MainController {
 
                 botBuild.setAccount(account);
                 botBuild.setLocationNum(locationNum);
+                botBuild.setDriver(driver);
                 String key = UUID.randomUUID().toString();
                 map.put(key, botBuild);
 
@@ -297,7 +327,7 @@ public class MainController {
             }
 
         } finally {
-            WebDriverPool.closeWebDriver(driver);
+//            WebDriverPool.closeWebDriver(driver);
             PrintWriter out = response.getWriter();
             out.print(resultJson.toJSONString());
             out.flush();
@@ -376,11 +406,11 @@ public class MainController {
     public void test3(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
         response.setHeader("Access-Control-Allow-Origin", "*");
-
+        String key = request.getParameter("key");
         JSONObject resultJson = null;
         WebDriver driver = null;
         try {
-            String key = request.getParameter("key");
+
             if (!map.containsKey(key)) {
                 log.error("map中没有该key，操作有误");
                 resultJson = new JSONObject();
@@ -390,8 +420,7 @@ public class MainController {
             }
             //初始化信息
             BotBuild botBuild = map.get(key);
-            driver = WebDriverPool.getWebDriver(Consts.PROVINCE[botBuild.getLocationNum()]);
-//            driver = WebDriverPool.getWebDriver();
+            driver = botBuild.getDriver();
             WeiboOpUtil.loginWeibo(driver, botBuild.getAccount());
             //开始登陆微博设置信息
             BotInfo botInfo = botBuild.getInfo();
@@ -401,13 +430,15 @@ public class MainController {
             String nickName = WeiboOpUtil.setNickName(driver, botInfo.getNickName());
             WeiboOpUtil.saveUserSetting(driver);
             //对设置信息进行截图
-            String screen = WebDriverUtil.getInfoSettingScreenShot(driver);
+            String screen = WebDriverUtil.screenShot4InfoSet(driver);
             String path = HEAD_IMG_SAVE_PATH + botInfo.getNickName() + ".jpg";
             HttpUtil.downloadImage(botInfo.getImgSrc(), path);
             WeiboOpUtil.setHeadImg(driver, path);
+
             //初始化关注列表
             List<String> list = new ArrayList<>(Arrays.asList(botInfo.getInterests().split("#")));
             List<WeiboUser> weiboUserList = WeiboOpUtil.subscribeWeiboByInterest(driver, list);
+
             //最后将所有数据存入数据库
             accountService.addWeiboAccount(botBuild.getAccount());
             Long accountId = accountService.findByUsername(botBuild.getAccount().getUsername()).getAccountId();
@@ -416,10 +447,10 @@ public class MainController {
             botInfo.setLocation(location);
             log.info("{}", botInfo);
             botInfoService.addBotInfo(botInfo);
+
             Long botId = botInfoService.findBotInfoByAccountId(accountId).getBotId();
             redisService.hSet(SUBSCRIBE_LIST_KEY, botId + "", JSON.toJSONString(weiboUserList));
 
-            map.remove(key);
             JSONObject attachJson = new JSONObject();
             attachJson.put("screen", screen);
             attachJson.put("botId", botId);
@@ -440,6 +471,7 @@ public class MainController {
             }
 
         } finally {
+            map.remove(key);
             WebDriverPool.closeWebDriver(driver);
             PrintWriter out = response.getWriter();
             out.print(resultJson.toJSONString());
@@ -448,10 +480,43 @@ public class MainController {
         }
     }
 
-    @GetMapping("/test4")
+    @GetMapping("/test")
     @ResponseBody
-    public void test4(HttpServletRequest request) {
+    public void test() {
+        BotInfo botInfo1 = botInfoService.findBotInfoByAccountId(2L);
+        BotInfo botInfo2 = botInfoService.findBotInfoByAccountId(3L);
+        BotInfo botInfo3 = botInfoService.findBotInfoByAccountId(4L);
+        BotInfo botInfo4 = botInfoService.findBotInfoByAccountId(5L);
+        BotInfo botInfo5 = botInfoService.findBotInfoByAccountId(6L);
+
+        taskExecutor.execute(getRunnable(botInfo1));
+        taskExecutor.execute(getRunnable(botInfo2));
+        taskExecutor.execute(getRunnable(botInfo3));
+        taskExecutor.execute(getRunnable(botInfo4));
+        taskExecutor.execute(getRunnable(botInfo5));
 
     }
 
+    public Runnable getRunnable(BotInfo botInfo) {
+        RedisMq redisMq = new RedisMq();
+        return new Runnable() {
+            int i = 0;
+
+            @Override
+            public void run() {
+                while (i < 7) {
+                    PushMessage pushMessage = new PushMessage();
+                    pushMessage.setBotInfo(botInfo);
+                    pushMessage.setBody(botInfo.getNickName() + "第" + i + "次操作");
+                    redisMq.push(botInfo.getBotId() + "", pushMessage.toJSON());
+                    i++;
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
+    }
 }

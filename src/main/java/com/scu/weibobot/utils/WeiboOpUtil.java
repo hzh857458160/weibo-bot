@@ -56,14 +56,16 @@ public class WeiboOpUtil {
         WebElement usernameInput = WebDriverUtil.waitUntilElementExist(
                 driver, 10, By.cssSelector("#loginName"));
         usernameInput.click();
-        usernameInput.sendKeys(username);
         waitSeconds(3);
+        usernameInput.sendKeys(username);
+
 
         log.info("输入密码");
         WebElement passwordInput = WebDriverUtil.forceGetElement(By.cssSelector("#loginPassword"), driver);
         passwordInput.click();
-        passwordInput.sendKeys(password);
         waitSeconds(3);
+        passwordInput.sendKeys(password);
+
 
         log.info("点击登录");
         WebElement loginBtn = WebDriverUtil.forceGetElement(By.cssSelector("#loginAction"), driver);
@@ -114,7 +116,7 @@ public class WeiboOpUtil {
         textarea.sendKeys(content);
         //定位发送按钮并点击
         WebElement sendBtn = driver.findElement(By.cssSelector("a.m-send-btn"));
-        sendBtn.click();
+        WebDriverUtil.jsClick(driver, sendBtn);
         waitSeconds(1);
 
     }
@@ -134,8 +136,6 @@ public class WeiboOpUtil {
         if (element != null) {
             log.warn("该账号疑似被封禁");
         }
-
-//        return getWeiboName(weibo);
     }
 
     public static void commentWeibo(WebDriver driver, WebElement weibo, String content) {
@@ -144,13 +144,18 @@ public class WeiboOpUtil {
         WebDriverUtil.forceGetElement(By.cssSelector(COMMENT_BTN_SELECTOR), weibo).click();
         waitSeconds(2);
         if ("评论".equals(text)) {
+            String url = driver.getCurrentUrl();
+            String weiboId = url.substring(url.indexOf("comment?id=") + 11);
             inputContentAndSubmit(driver, content);
-            weibo.click();
+            driver.get("https://m.weibo.cn/detail/" + weiboId);
+            waitSeconds(2);
 
         } else {
             WebDriverUtil.forceGetElement(By.cssSelector("div.box-left.m-box-col.m-box-center-a"), driver).click();
             WebElement textarea = WebDriverUtil.forceGetElement(By.cssSelector("textarea.textarea"), driver);
+            waitSeconds(3);
             textarea.sendKeys(content);
+            waitSeconds(2);
             WebDriverUtil.forceGetElement(By.cssSelector("button.btn-send"), driver).click();
         }
         waitSeconds(4);
@@ -161,69 +166,33 @@ public class WeiboOpUtil {
     }
 
     public static void reportWeibo(WebDriver driver, WebElement weibo, String content) {
-        try {
-            log.info("转发微博:{}", content);
-            WebDriverUtil.forceGetElement(By.cssSelector(REPORT_BTN_SELECTOR), weibo).click();
-            inputContentAndSubmit(driver, content);
-
-        } catch (WebDriverException e) {
-            if (e.getMessage().contains("not clickable at")) {
-                WebDriverUtil.scrollPage(driver, 200);
-                reportWeibo(driver, weibo, content);
-            }
-        }
-
-
+        log.info("转发微博:{}", content);
+        WebDriverUtil.forceGetElement(By.cssSelector(REPORT_BTN_SELECTOR), weibo).click();
+        waitSeconds(2);
+        inputContentAndSubmit(driver, content);
     }
 
     public static void backToMainPage(WebDriver driver) {
+        WebElement mask = WebDriverUtil.isElementExist(By.cssSelector("div.m-mask"), driver);
+        if (mask != null) {
+            waitSeconds(5);
+        }
         WebDriverUtil.forceGetElement(By.cssSelector("div.nav-left"), driver).click();
         waitSeconds(2);
     }
 
-    /**
-     * 转发对应的微博
-     * @param driver
-     * @param index
-     * @param reportContent
-     */
-    public static void reportWeibo(WebDriver driver, int index, String reportContent){
-        waitSeconds(3);
-        log.info("转发第{}条微博，添加内容为[{}]",index, reportContent);
-        //获取想要转发的微博
-        WebElement weibo = getFocusWeibo(driver, index);
-        //定位转发按钮并点击
-        WebElement reportBtn = weibo.findElement(By.cssSelector("i.lite-iconf.lite-iconf-report"));
-        reportBtn.click();
-        waitSeconds(1);
-        inputContentAndSubmit(driver, reportContent);
-    }
-
-    /**
-     * 评论对应微博
-     * @param driver
-     * @param index
-     * @param commentContent
-     */
-    public static void commentWeibo(WebDriver driver, int index, String commentContent){
-        waitSeconds(3);
-        log.info("评论第{}条微博，评论内容为[{}]",index, commentContent);
-        WebElement weibo = getFocusWeibo(driver, index);
-        WebElement commentBtn = weibo.findElement(By.cssSelector("i.lite-iconf.lite-iconf-comments"));
-        commentBtn.click();
-        waitSeconds(1);
-        inputContentAndSubmit(driver, commentContent);
-    }
 
     private static void inputContentAndSubmit(WebDriver driver, String content){
         //定位输入框并输入内容
-        WebElement textarea = WebDriverUtil.forceGetElement(By.cssSelector("span.m-wz-def > textarea"), driver);
+        WebElement textarea = WebDriverUtil.forceGetElement(By.cssSelector("span > textarea:nth-child(1)"), driver);
         textarea.click();
         waitSeconds(2);
         textarea.sendKeys(content);
+        waitSeconds(2);
         //定位发送按钮并点击
-        WebDriverUtil.forceGetElement(By.cssSelector("a.m-send-btn"), driver).click();
-        waitSeconds(1);
+        WebElement postBtn = WebDriverUtil.forceGetElement(By.cssSelector("a.m-send-btn"), driver);
+        WebDriverUtil.jsClick(driver, postBtn);
+        waitSeconds(3);
     }
 
     /**
@@ -248,69 +217,82 @@ public class WeiboOpUtil {
             log.error("list size = 0");
             throw new RuntimeException("interestList size is 0");
         }
-        String handle = WebDriverUtil.openNewTab(driver, BASE_URL);
-        WebDriverUtil.changeWindowTo(driver, handle);
-        waitSeconds(3);
-        //先点击一次搜索框，转到搜索页
-        WebDriverUtil.forceGetElement(By.cssSelector("aside > label > div"), driver).click();
-
-        By inputBy = By.cssSelector("input[type = 'search']");
-        By userTabBy = By.cssSelector("ul > li:nth-child(2) > span");
-        List<WeiboUser> weiboUserList = new ArrayList<>(200);
-        for (String interest : interestList) {
-            //再点击一次搜索框，并输入相关爱好，并回车
-            WebElement searchBar = WebDriverUtil.forceGetElement(inputBy, driver);
-            searchBar.clear();
-            searchBar.click();
-            waitSeconds(2);
-            searchBar.sendKeys(interest);
-            searchBar.sendKeys(Keys.ENTER);
+        try {
+            String handle = WebDriverUtil.openNewTab(driver, BASE_URL);
+            WebDriverUtil.changeWindowTo(driver, handle);
             waitSeconds(3);
-            //点击用户标签页，等待跳转
-            WebDriverUtil.forceGetElement(userTabBy, driver).click();
-            waitSeconds(3);
+            //先点击一次搜索框，转到搜索页
+            WebDriverUtil.forceGetElement(By.cssSelector("aside > label > div"), driver).click();
 
-            WebDriverUtil.scrollToBottom(driver);
-            waitSeconds(2);
-            List<WebElement> subscribeList = WebDriverUtil.forceGetElementList(
-                    By.cssSelector("div.card-list > div"), driver);
-            int i = 1;
-            for (WebElement tempElement : subscribeList) {
-                if (i % 5 == 0) {
-                    double d = new Random().nextDouble() * 2 + 2;
-                    waitSeconds(d);
-                }
-                i++;
-
-                WebDriverUtil.scrollToElement(driver, tempElement);
-                String fansNum = tempElement.findElement(By.cssSelector("div.m-text-box > h4:nth-child(3)")).getText();
-                if (!fansNum.contains("万")) {
-                    waitSeconds(1);
-                    continue;
-                }
-                WebElement addBox = WebDriverUtil.isElementExist(By.cssSelector("div.m-add-box"), tempElement);
-                if (addBox == null) {
-                    waitSeconds(1);
-                    continue;
-                }
-                String addTip = addBox.findElement(By.cssSelector("h4")).getText();
-                if ("加关注".equals(addTip)) {
-                    WebDriverUtil.jsClick(driver, addBox);
-                    waitSeconds(2);
-                }
-                String imgSrc = WebDriverUtil.forceGetElement(By.cssSelector("div.m-img-box > img")
-                        , tempElement).getAttribute("src");
-                String nickName = WebDriverUtil.forceGetElement(By.cssSelector(
-                        "div.m-box-col.m-box-dir.m-box-center > div > h3 > span"), tempElement).getText();
-                String intro = WebDriverUtil.forceGetElement(By.cssSelector(
-                        "div.m-box-col.m-box-dir.m-box-center > div > h4:nth-child(2)"), tempElement).getText();
-                WeiboUser weiboUser = new WeiboUser(imgSrc, nickName, intro);
-                weiboUserList.add(weiboUser);
+            By inputBy = By.cssSelector("input[type = 'search']");
+            By userTabBy = By.cssSelector("ul > li:nth-child(2) > span");
+            List<WeiboUser> weiboUserList = new ArrayList<>(200);
+            for (String interest : interestList) {
+                //再点击一次搜索框，并输入相关爱好，并回车
+                WebElement searchBar = WebDriverUtil.forceGetElement(inputBy, driver);
+                searchBar.clear();
+                searchBar.click();
+                waitSeconds(2);
+                searchBar.sendKeys(interest);
                 waitSeconds(1);
-            }
-        }
+                searchBar.sendKeys(Keys.ENTER);
+                waitSeconds(3);
+                //点击用户标签页，等待跳转
+                WebDriverUtil.forceGetElement(userTabBy, driver).click();
+                waitSeconds(3);
 
-        return weiboUserList;
+                WebDriverUtil.scrollToBottom(driver);
+                waitSeconds(2);
+
+                List<WebElement> subscribeList = WebDriverUtil.forceGetElementList(
+                        By.cssSelector("div.card-list > div"), driver);
+                int i = 1;
+                for (WebElement tempElement : subscribeList) {
+                    if (i % 5 == 0) {
+                        double d = new Random().nextDouble() * 2 + 2;
+                        waitSeconds(d);
+                    }
+                    i++;
+
+                    WebDriverUtil.scrollToElement(driver, tempElement);
+                    String fansNum = tempElement.findElement(By.cssSelector("div.m-text-box > h4:nth-child(3)")).getText();
+                    if (!fansNum.contains("万")) {
+                        waitSeconds(2);
+                        continue;
+                    }
+                    WebElement addBox = WebDriverUtil.isElementExist(By.cssSelector("div.m-add-box"), tempElement);
+                    if (addBox == null) {
+                        waitSeconds(2);
+                        continue;
+                    }
+                    String addTip = addBox.findElement(By.cssSelector("h4")).getText();
+                    if ("加关注".equals(addTip)) {
+                        int ra = new Random().nextInt() * 100 + 1;
+                        if (ra < 80) {
+                            WebDriverUtil.jsClick(driver, addBox);
+                            waitSeconds(3);
+                            String imgSrc = WebDriverUtil.forceGetElement(By.cssSelector("div.m-img-box > img")
+                                    , tempElement).getAttribute("src");
+                            String nickName = WebDriverUtil.forceGetElement(By.cssSelector(
+                                    "div.m-box-col.m-box-dir.m-box-center > div > h3 > span"), tempElement).getText();
+                            String intro = WebDriverUtil.forceGetElement(By.cssSelector(
+                                    "div.m-box-col.m-box-dir.m-box-center > div > h4:nth-child(2)"), tempElement).getText();
+                            WeiboUser weiboUser = new WeiboUser(imgSrc, nickName, intro);
+                            weiboUserList.add(weiboUser);
+                            waitSeconds(1);
+                        }
+                    }
+
+                }
+            }
+
+            return weiboUserList;
+
+        } catch (Exception e) {
+            log.error("关注出错");
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public static WebElement getRecentPostWeibo(WebDriver driver) {
@@ -343,8 +325,7 @@ public class WeiboOpUtil {
         //修改昵称
         String handle = WebDriverUtil.openNewTab(driver, "https://m.weibo.cn/setting/nick");
         WebDriverUtil.changeWindowTo(driver, handle);
-        waitSeconds(2);
-        WebElement nickNameInput = driver.findElement(By.cssSelector("input[placeholder = '请填写昵称']"));
+        WebElement nickNameInput = WebDriverUtil.waitUntilElementExist(driver, 5, By.cssSelector("input[placeholder = '请填写昵称']"));
         WebElement ensureBtn = driver.findElement(By.cssSelector("a.m-btn.m-btn-block.m-btn-orange"));
 
         while(true){

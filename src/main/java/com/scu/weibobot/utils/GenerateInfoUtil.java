@@ -362,16 +362,10 @@ public class GenerateInfoUtil {
             new WebDriverWait(driver, 5).until(ExpectedConditions
                     .presenceOfElementLocated(By.cssSelector("p")));
 
-            List<WebElement> pElementList;
-            String articleUrlToken = "www.yidianzixun.com/article";
-            if (!driver.getCurrentUrl().contains(articleUrlToken)) {
-                pElementList = driver.findElements(By.cssSelector("p"));
-            } else {
-                pElementList = driver.findElements(By.cssSelector("#imedia-article > p"));
-            }
+            List<WebElement> pElementList = driver.findElements(By.cssSelector("p"));
             for (int i = 0; i < 10; i++) {
                 String text = pElementList.get(i).getText().trim();
-                if (!"".equals(text) && text.length() < 50) {
+                if (!"".equals(text) && text.length() > 50) {
                     result = text;
                     break;
                 }
@@ -381,6 +375,7 @@ public class GenerateInfoUtil {
 
         } catch (Exception e) {
             WebDriverUtil.changeWindowAndCloseOthers(driver, prePageHandle);
+            e.printStackTrace();
             return null;
         }
     }
@@ -396,6 +391,7 @@ public class GenerateInfoUtil {
                     By.cssSelector("#kw"));
             searchBar.click();
             searchBar.sendKeys(keyWord);
+            waitSeconds(1);
             WebDriverUtil.forceGetElement(By.cssSelector("#su"), driver).click();
 
             WebElement newsBtn = WebDriverUtil.waitUntilElementExist(driver, 5,
@@ -416,11 +412,11 @@ public class GenerateInfoUtil {
             WebDriverUtil.changeWindowTo(driver, articlePageHandle);
             WebDriverUtil.waitUntilElementExist(driver, 5,
                     By.cssSelector("div.article-content"));
-            List<WebElement> spanList = WebDriverUtil.forceGetElementList(By.cssSelector("div.article-content > p"), driver);
+            List<WebElement> pList = WebDriverUtil.forceGetElementList(By.cssSelector("div.article-content > p"), driver);
 
-            for (int i = 0; i < spanList.size(); i++) {
-                String text = spanList.get(i).getText().trim();
-                if (!"".equals(text) && text.length() < 50) {
+            for (int i = 0; i < pList.size(); i++) {
+                String text = pList.get(i).getText().trim();
+                if (!"".equals(text) && text.length() > 50) {
                     result = text;
                     break;
                 }

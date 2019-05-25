@@ -82,20 +82,31 @@ public class ProxyUtil {
         String lastIp = WebDriverUtil.getCachedIp(CACHE_IP_KEY);
         log.info("当前ip:" + currentIp);
         log.info("缓存ip:" + lastIp);
+        ProxyIp proxyIp;
         if (!currentIp.equals(lastIp)) {
             setZHIMAWhiteList(currentIp);
             delZHIMAWhiteList(lastIp);
             setKDLWhiteList(currentIp);
+
+            proxyIp = getProxy(province, ZHIMA);
+            if (proxyIp != null) {
+                return proxyIp;
+            }
+
+        } else {
+            proxyIp = getProxy(province, ZHIMA);
+            if (proxyIp != null) {
+                return proxyIp;
+            }
+
+            proxyIp = getProxy(province, KUAIDAILI);
+            if (proxyIp != null) {
+                return proxyIp;
+            }
         }
-        ProxyIp proxyIp;
-        proxyIp = getProxy(province, KUAIDAILI);
-        if (proxyIp != null) {
-            return proxyIp;
-        }
-        proxyIp = getProxy(province, ZHIMA);
-        if (proxyIp != null) {
-            return proxyIp;
-        }
+
+
+
         return null;
     }
 
