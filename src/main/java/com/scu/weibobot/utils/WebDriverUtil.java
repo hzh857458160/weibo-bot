@@ -56,24 +56,26 @@ public class WebDriverUtil {
 
 
     public static boolean getUrlWithCookie(WebDriver driver, String url, String key){
-        if (isCookieExist(key)){
-            log.info("存在cookies");
-            Set<Object> cookieSet = webDriverUtil.redisService.sGet(key);
-            driver.get(url);
-            waitSeconds(3);
-            for (Object obj : cookieSet){
-                WebDriverUtil.addCookie(driver, (Cookie) obj);
+        try {
+            if (isCookieExist(key)) {
+                log.info("存在cookies");
+                Set<Object> cookieSet = webDriverUtil.redisService.sGet(key);
+                driver.get(url);
+                waitSeconds(3);
+                for (Object obj : cookieSet) {
+                    WebDriverUtil.addCookie(driver, (Cookie) obj);
+                }
+                driver.navigate().refresh();
+                waitSeconds(3);
+                log.info("替换原有cookie");
+                webDriverUtil.redisService.del(key);
+                saveCurrentCookies(driver, key, 24 * 60 * 60);
+                return true;
             }
-            driver.navigate().refresh();
-            waitSeconds(3);
-            log.info("替换原有cookie");
-            webDriverUtil.redisService.del(key);
-            saveCurrentCookies(driver, key, 24 * 60 * 60);
-            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
         return false;
-
     }
 
     public static WebElement waitUntilElementExist(WebDriver driver, int waitMaxTime, By by) {
@@ -332,7 +334,7 @@ public class WebDriverUtil {
     }
 
     public static String screenShot4Comment(WebDriver driver) throws IOException {
-        WebElement element = WebDriverUtil.forceGetElement(By.cssSelector("div.lite-page-tab"), driver);
+        WebElement element = WebDriverUtil.forceGetElement(By.cssSelector("div.nav-main"), driver);
         File screen = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
         BufferedImage image = ImageIO.read(screen);
         int width = element.getSize().getWidth();

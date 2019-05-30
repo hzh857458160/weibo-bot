@@ -139,6 +139,7 @@ public class WeiboBotExecutor implements Runnable {
 
         } catch (IOException e) {
             e.printStackTrace();
+            log.info(driver.getCurrentUrl());
 
         } finally {
             WebDriverPool.closeWebDriver(driver);

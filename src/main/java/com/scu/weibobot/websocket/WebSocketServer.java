@@ -59,7 +59,6 @@ public class WebSocketServer {
     public void onClose(Session session) {
         log.info("有连接关闭！");
 
-
     }
 
 
@@ -99,22 +98,22 @@ public class WebSocketServer {
      */
     private Runnable pushLogger(Long botId, Session session) {
         log.info("pushLogger({}, {})", botId, session);
+        RedisMq redisMq = new RedisMq();
         return () -> {
             boolean flag = true;
             while (flag) {
                 try {
-                    PushMessage pushMessage = MessageQueue.poll(botId);
-                    if (pushMessage == null) {
-                        Thread.sleep(2000);
-                        continue;
+                    String result = redisMq.pop(botId + "");
+                    Thread.sleep(1000);
+                    if (!session.isOpen()) {
+                        flag = false;
                     }
-                    log.info("push logger : {}", pushMessage);
-                    sendMessage(pushMessage.toJSON(), session);
-
+                    if (result != null) {
+                        log.info("发送消息:{}", result);
+                        sendMessage(result, session);
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    flag = false;
-
                 }
             }
         };

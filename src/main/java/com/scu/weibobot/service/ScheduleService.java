@@ -12,6 +12,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -43,37 +44,38 @@ public class ScheduleService {
     public void coreJob() {
         log.info("进入定时任务coreJob() {}", LocalTime.now());
         //获取所有可用的微博机器人账号
-        List<WeiboAccount> weiboAccountList = accountService.findAllAccount();
-        //根据账号去寻找对应的资料
-        int i = 0;
-        for (WeiboAccount account : weiboAccountList) {
+//        List<WeiboAccount> weiboAccountList = accountService.findAllAccount();
+//        //根据账号去寻找对应的资料
+//        int i = 0;
+//        for (WeiboAccount account : weiboAccountList) {
+//            BotInfo botInfo = botInfoService.findBotInfoByAccountId(account.getAccountId());
+//            if (readyToStart(botInfo)) {
+//                //然后设置好WeiboBotExecuter的属性
+//                WeiboBotExecutor botExecutor = new WeiboBotExecutor();
+//                botExecutor.setBotInfo(botInfo);
+//                botExecutor.setWeiboAccount(account);
+//                botExecutor.setBotInfoService(botInfoService);
+//                //使用线程池调用WeiboBotExecuter的run方法
+//                if (i % 3 == 0) {
+//                    waitSeconds(10);
+//                }
+//                i++;
+//                taskExecutor.execute(botExecutor);
+//            } else {
+//                log.info("bot{}尚未达到概率", botInfo.getBotId());
+//            }
+//        }
+        List<String> tmpList = Arrays.asList("17716144642", "18848607307", "15085105751");
+        for (String tmp : tmpList) {
+            WeiboAccount account = accountService.findByUsername(tmp);
             BotInfo botInfo = botInfoService.findBotInfoByAccountId(account.getAccountId());
-            if (readyToStart(botInfo)) {
-                //然后设置好WeiboBotExecuter的属性
-                WeiboBotExecutor botExecutor = new WeiboBotExecutor();
-                botExecutor.setBotInfo(botInfo);
-                botExecutor.setWeiboAccount(account);
-                botExecutor.setBotInfoService(botInfoService);
-                //使用线程池调用WeiboBotExecuter的run方法
-                if (i % 3 == 0) {
-                    waitSeconds(10);
-                }
-                i++;
-                taskExecutor.execute(botExecutor);
-            } else {
-                log.info("bot{}尚未达到概率", botInfo.getBotId());
-            }
+            WeiboBotExecutor botExecutor = new WeiboBotExecutor();
+            botExecutor.setBotInfo(botInfo);
+            botExecutor.setWeiboAccount(account);
+            botExecutor.setBotInfoService(botInfoService);
+            taskExecutor.execute(botExecutor);
+            waitSeconds(5);
         }
-
-//        WeiboAccount account = accountService.findByUsername("17716144642");
-//        BotInfo botInfo = botInfoService.findBotInfoByAccountId(account.getAccountId());
-//        WeiboBotExecutor botExecutor = new WeiboBotExecutor();
-//        botExecutor.setBotInfo(botInfo);
-//        botExecutor.setWeiboAccount(account);
-//        botExecutor.setBotInfoService(botInfoService);
-//        taskExecutor.execute(botExecutor);
-//        waitSeconds(5);
-
     }
 
     /**

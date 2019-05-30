@@ -188,8 +188,12 @@ public class MainController {
         int hour = LocalTime.now().getHour();
         int nowMinute = LocalTime.now().getMinute();
         String minuteStr = Consts.RUN_PER_HOUR_CRON.split(" ")[2];
+
         if (nowMinute >= Integer.parseInt(minuteStr)) {
             hour++;
+        }
+        if (Integer.parseInt(minuteStr) < 10) {
+            minuteStr = "0" + minuteStr;
         }
         String startTime = hour + ":" + minuteStr;
         model.addAttribute("botList", botList);
